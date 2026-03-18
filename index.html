@@ -32,6 +32,9 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
 <div id="app"><canvas id="game" width="1280" height="720"></canvas><div id="overlay"></div></div>
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),overlay=document.getElementById('overlay');
+const mainCoverImage = new Image();
+mainCoverImage.src = 'IMAGE.PNG';
+
 const TITLE='כלא או גלידה', STORAGE_KEY='kela_o_glida_scores_v5';
 let state='cover',selectedCharacter='r',scoreSaved=false,winner=null,startTime=0,finishTime=0,gameOverReason='',shake=0,flash=0,blink=0,cameraX=0,countdown=0,last=0,altCheatTaps=[];
 const road={y:470,height:120}, worldLength=8200, finish={x:worldLength-260};
@@ -72,7 +75,43 @@ function drawDistanceBar(x,y,w,h){ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(x
 function drawTitleOnCanvas(){if(state==='cover'){const a=.45+(Math.sin(blink*4)+1)*.25;ctx.globalAlpha=a;ctx.font='bold 32px Arial';ctx.textAlign='center';ctx.fillStyle='#d7fff7';ctx.fillText('לחץ על מקש כלשהו להתחיל',canvas.width/2,646);ctx.globalAlpha=1}}
 function drawCoverCharacter(x,y,id,smiling){const skin='#f1c27d',uniform='#738c3a',uniformDark='#4c6124',hair='#171717',beard=id==='r';ctx.fillStyle=uniform;ctx.fillRect(x-46,y+56,92,120);ctx.fillStyle=uniformDark;ctx.fillRect(x-46,y+148,92,28);ctx.fillStyle='#222a30';ctx.fillRect(x-6,y+56,12,120);ctx.fillStyle=skin;ctx.fillRect(x-12,y+34,24,24);ctx.beginPath();ctx.arc(x,y,54,0,Math.PI*2);ctx.fill();ctx.fillStyle=hair;ctx.beginPath();ctx.arc(x,y-8,55,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(x-44,y-8,88,15);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(x-50,y+2,10,0,Math.PI*2);ctx.arc(x+50,y+2,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.fillRect(x-23,y-2,9,9);ctx.fillRect(x+14,y-2,9,9);ctx.fillRect(x-28,y-12,18,4);ctx.fillRect(x+10,y-12,18,4);ctx.fillStyle='#d79f68';ctx.fillRect(x-3,y+8,6,14);ctx.fillStyle=smiling?'#fff':'#6c2a21';if(smiling){ctx.fillRect(x-13,y+28,26,8);ctx.fillStyle='#cc8b8b';ctx.fillRect(x-13,y+34,26,4)}else{ctx.fillRect(x-12,y+30,24,4)}if(beard){ctx.fillStyle='#181818';ctx.fillRect(x-30,y+24,60,20);ctx.fillRect(x-24,y+42,48,14)}else{ctx.fillStyle='#252525';ctx.fillRect(x-18,y+25,36,10)}}
 function drawCoverBackground(){const sky=ctx.createLinearGradient(0,0,0,canvas.height);sky.addColorStop(0,'#1f2d5d');sky.addColorStop(.36,'#385b96');sky.addColorStop(.72,'#f09a4b');sky.addColorStop(1,'#f4d082');ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,canvas.height);const drawDune=(x,baseY,w,h)=>{ctx.beginPath();ctx.moveTo(x-w/2,baseY);ctx.quadraticCurveTo(x,baseY-h,x+w/2,baseY);ctx.closePath();ctx.fill()};ctx.fillStyle='#e2b56d';drawDune(200,370,260,90);drawDune(420,370,320,110);drawDune(650,370,240,80);drawDune(900,370,300,100);drawDune(1120,370,220,70);ctx.fillStyle='#d6a85a';ctx.fillRect(0,370,canvas.width,350);ctx.fillStyle='#c79247';for(let i=0;i<canvas.width;i+=28)ctx.fillRect(i,560+((i/28)%2)*4,13,4);ctx.fillStyle='#333842';ctx.beginPath();ctx.moveTo(250,720);ctx.bezierCurveTo(340,600,430,525,555,470);ctx.bezierCurveTo(670,420,785,408,920,418);ctx.bezierCurveTo(1060,430,1170,455,1280,500);ctx.lineTo(1280,720);ctx.closePath();ctx.fill();ctx.strokeStyle='#ffd54a';ctx.lineWidth=8;ctx.setLineDash([26,20]);ctx.beginPath();ctx.moveTo(760,720);ctx.bezierCurveTo(730,620,720,545,768,495);ctx.bezierCurveTo(835,445,958,438,1125,468);ctx.stroke();ctx.setLineDash([]);const cc=(x,y,s=1)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#2c8e50';ctx.fillRect(-9,-56,18,62);ctx.fillRect(-24,-37,12,12);ctx.fillRect(12,-33,12,12);ctx.fillRect(-24,-58,10,22);ctx.fillRect(14,-56,10,22);ctx.restore()};cc(140,430,1.05);cc(260,420,.9);cc(420,415,.8);cc(610,410,.9);cc(760,418,.85);cc(930,412,.9);cc(1120,425,1);const fp=(x,y,s=.9)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#8b5a2b';ctx.fillRect(-3,-40,6,40);ctx.fillStyle='#2f8f4e';ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-20,-30);ctx.lineTo(-6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(20,-30);ctx.lineTo(6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-16,-44);ctx.lineTo(-4,-36);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(16,-44);ctx.lineTo(4,-36);ctx.fill();ctx.restore()};fp(350,418,.85);fp(540,408,.9);fp(720,402,.8);fp(980,410,.95);const glow=ctx.createRadialGradient(canvas.width/2,118,20,canvas.width/2,118,220);glow.addColorStop(0,'rgba(255,223,120,.34)');glow.addColorStop(1,'rgba(255,223,120,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,canvas.width,280);ctx.textAlign='center';ctx.lineWidth=8;ctx.strokeStyle='#5d2208';ctx.fillStyle='#ffe06e';ctx.font='bold 82px Arial';ctx.strokeText(TITLE,canvas.width/2,128);ctx.fillText(TITLE,canvas.width/2,128);drawCoverCharacter(180,370,'r',true);drawCoverCharacter(260,370,'h',false);const towerBaseX=canvas.width-220,towerBaseY=250;ctx.strokeStyle='#5c4a33';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(towerBaseX,towerBaseY+180);ctx.lineTo(towerBaseX+40,towerBaseY);ctx.moveTo(towerBaseX+120,towerBaseY+180);ctx.lineTo(towerBaseX+80,towerBaseY);ctx.stroke();ctx.fillStyle='#7a5a3a';ctx.fillRect(towerBaseX+20,towerBaseY-20,80,20);ctx.fillStyle='#9c7a4a';ctx.fillRect(towerBaseX+10,towerBaseY-70,100,50);ctx.fillStyle='#1e2a3a';ctx.fillRect(towerBaseX+35,towerBaseY-55,50,22);const guardX=towerBaseX+52,guardY=towerBaseY-65;ctx.fillStyle='#1b1b1b';ctx.fillRect(guardX-10,guardY+12,20,28);ctx.fillStyle='#ffd7a8';ctx.beginPath();ctx.arc(guardX,guardY,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2f5f2f';ctx.fillRect(guardX-13,guardY-12,26,8);ctx.fillStyle='#000';ctx.fillRect(guardX-6,guardY-2,3,3);ctx.fillRect(guardX+3,guardY-2,3,3);ctx.fillRect(guardX-30,guardY-4,24,8);ctx.fillStyle='#0f0f0f';ctx.beginPath();ctx.arc(guardX-30,guardY,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(guardX-8,guardY,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6ec1ff';ctx.fillRect(guardX-31,guardY-3,2,2);ctx.fillRect(guardX-9,guardY-3,2,2);ctx.strokeStyle='#1b1b1b';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(guardX-6,guardY+10);ctx.lineTo(guardX-18,guardY+2);ctx.moveTo(guardX+6,guardY+10);ctx.lineTo(guardX-10,guardY+2);ctx.stroke();ctx.fillStyle='#5e3e24';ctx.beginPath();ctx.moveTo(towerBaseX,towerBaseY-70);ctx.lineTo(towerBaseX+60,towerBaseY-100);ctx.lineTo(towerBaseX+120,towerBaseY-70);ctx.closePath();ctx.fill();const innX=canvas.width-620,innY=300;ctx.fillStyle='#c48a4a';ctx.fillRect(innX,innY,240,110);ctx.fillStyle='#7a4e2b';ctx.beginPath();ctx.moveTo(innX-24,innY);ctx.lineTo(innX+120,innY-64);ctx.lineTo(innX+264,innY);ctx.closePath();ctx.fill();ctx.fillStyle='#1f2d3a';ctx.fillRect(innX+30,innY+30,34,28);ctx.fillRect(innX+90,innY+30,34,28);ctx.fillRect(innX+150,innY+30,34,28);ctx.fillStyle='#5e5e5e';ctx.fillRect(innX+118,innY-55,6,30);ctx.fillStyle='#fff';ctx.fillRect(innX+70,innY-85,120,30);ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeRect(innX+70,innY-85,120,30);ctx.fillStyle='#1e8f3a';ctx.font='bold 20px Arial';ctx.fillText('יטבתה',innX+130,innY-63);const palm=(x,y,s=1)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#8b5a2b';ctx.fillRect(-4,-60,8,60);ctx.fillStyle='#2f8f4e';ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(-30,-45);ctx.lineTo(-8,-40);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(30,-45);ctx.lineTo(8,-40);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(-26,-70);ctx.lineTo(-6,-54);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(26,-70);ctx.lineTo(6,-54);ctx.fill();ctx.restore()};palm(innX-30,innY+12,1.6);palm(innX+260,innY+18,1.4);palm(innX+300,innY+20,1.2);const signX=canvas.width-380,signY=300;ctx.fillStyle='#5e5e5e';ctx.fillRect(signX+38,signY+30,10,90);ctx.fillStyle='#1f6ed4';ctx.fillRect(signX,signY-10,90,50);ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.strokeRect(signX,signY-10,90,50);ctx.fillStyle='#fff';ctx.font='bold 24px Arial';ctx.fillText('כביש 90',signX+45,signY+22);ctx.fillStyle='rgba(0,0,0,.10)';ctx.fillRect(0,0,canvas.width,canvas.height)}
-function drawScene(now){ctx.save();const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;ctx.translate(sx,sy);if(state==='cover'||state==='menu'||state==='scoreboard'){drawCoverBackground();drawTitleOnCanvas()}else{drawSky();drawGround();drawRunner(enemy);drawOfficer();drawRunner(player);drawHud(now)}if(flash>.01){ctx.fillStyle='rgba(255,255,255,'+flash+')';ctx.fillRect(0,0,canvas.width,canvas.height)}ctx.restore()}
+
+function drawMainCoverImage(){
+  if(mainCoverImage.complete && mainCoverImage.naturalWidth > 0){
+    ctx.drawImage(mainCoverImage, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    drawCoverBackground();
+  }
+}
+
+function drawScene(now){
+  ctx.save();
+  const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;
+  ctx.translate(sx,sy);
+
+  if(state==='cover'){
+    drawMainCoverImage();
+    drawTitleOnCanvas();
+  } else if(state==='menu' || state==='scoreboard'){
+    drawCoverBackground();
+  } else {
+    drawSky();
+    drawGround();
+    drawRunner(enemy);
+    drawOfficer();
+    drawRunner(player);
+    drawHud(now);
+  }
+
+  if(flash>.01){
+    ctx.fillStyle='rgba(255,255,255,'+flash+')';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  ctx.restore();
+}
+
 function loop(ts){const now=ts||performance.now(),dt=Math.min(.033,(now-last)/1000||.016);last=now;if(state==='playing')updatePlaying(dt,now);else{shake*=Math.pow(.18,dt||.016);flash*=Math.pow(.07,dt||.016);blink+=dt||.016;updateDust(player.dust,dt||.016);updateDust(enemy.dust,dt||.016)}drawScene(now);requestAnimationFrame(loop)}
 showCover();requestAnimationFrame(loop)
 </script>
