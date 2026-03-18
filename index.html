@@ -42,6 +42,23 @@ canvas{
   pointer-events:none;
   padding:12px;
   overflow:auto;
+  overscroll-behavior:contain;
+}
+#scrollHint{
+  position:fixed;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  z-index:10000;
+  display:none;
+  pointer-events:none;
+  background:rgba(0,0,0,.72);
+  color:#fff6d6;
+  border:2px solid #ffd166;
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  box-shadow:0 8px 18px rgba(0,0,0,.28);
 }
 #overlay::-webkit-scrollbar{width:0;height:0}
 .panel{
@@ -169,6 +186,7 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
   <canvas id="game"></canvas>
   <div id="overlay"></div>
 </div>
+<div id="scrollHint">גלול למטה</div>
 <div id="rotateWarning">
   <div class="box">
     <div class="big">סובב את הטלפון לרוחב כדי לשחק</div>
@@ -180,6 +198,7 @@ const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
 const overlay=document.getElementById('overlay');
 const rotateWarning=document.getElementById('rotateWarning');
+const scrollHint=document.getElementById('scrollHint');
 
 const coverImage=new Image(); coverImage.src='Image.png';
 const hazanAvatar=new Image(); hazanAvatar.src='HAZAN.png';
@@ -222,7 +241,24 @@ function isMobileLike(){ return window.matchMedia('(pointer: coarse)').matches |
 function isNarrowMobile(){ return isMobileLike() && window.innerWidth <= 700; }
 function shouldShowRotateWarning(){ return isMobileLike() && window.innerHeight>window.innerWidth; }
 function updateRotateWarning(){ rotateWarning.style.display=shouldShowRotateWarning()?'flex':'none'; }
-function setOverlay(html){ overlay.innerHTML=html; }
+function updateScrollHint(){
+  const canScroll = overlay.scrollHeight > overlay.clientHeight + 4;
+  const nearBottom = overlay.scrollTop + overlay.clientHeight >= overlay.scrollHeight - 8;
+  const shouldShow = !shouldShowRotateWarning() && canScroll && !nearBottom && state !== 'playing' && state !== 'cover';
+  scrollHint.style.display = shouldShow ? 'block' : 'none';
+}
+function setOverlay(html){
+  const prevScroll = overlay.scrollTop;
+  overlay.innerHTML=html;
+  requestAnimationFrame(()=>{
+    if(state==='menu' && isNarrowMobile()){
+      overlay.scrollTop = prevScroll;
+    } else {
+      overlay.scrollTop = 0;
+    }
+    updateScrollHint();
+  });
+}
 function formatTime(ms){ return (ms/1000).toFixed(2)+' שניות'; }
 function getScores(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch{return[];} }
 function saveScore(name,timeMs){ const s=getScores(); s.push({name:name||'שחקן',timeMs}); s.sort((a,b)=>a.timeMs-b.timeMs); localStorage.setItem(STORAGE_KEY,JSON.stringify(s.slice(0,10))); }
@@ -268,17 +304,17 @@ function showMenu(){
     );
 
     drawAvatarInElement('mobile-avatar', selectedCharacter);
-    document.getElementById('prevCharBtn').onclick = () => { selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); };
-    document.getElementById('nextCharBtn').onclick = () => { selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); };
+    document.getElementById('prevCharBtn').onclick = () => { const keepScroll=overlay.scrollTop; selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); }); };
+    document.getElementById('nextCharBtn').onclick = () => { const keepScroll=overlay.scrollTop; selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); }); };
     document.getElementById('startBtn').onclick = () => startGame();
     document.getElementById('scoresBtn').onclick = () => showScoreboard();
     return;
   }
 
-  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, הקש מהר בשביל לרוץ, החלק למעלה לקפיצה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
+  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח או נגיעה, וקפוץ עם החץ למעלה או החלקה למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
   drawAvatarInElement('avatar-h','h');
   drawAvatarInElement('avatar-r','r');
-  document.querySelectorAll('.character-card').forEach(card=>card.onclick=()=>{ selectedCharacter=card.dataset.char; showMenu(); });
+  document.querySelectorAll('.character-card').forEach(card=>card.onclick=()=>{ const keepScroll=overlay.scrollTop; selectedCharacter=card.dataset.char; showMenu(); requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); }); });
   document.getElementById('startBtn').onclick=()=>startGame();
   document.getElementById('scoresBtn').onclick=()=>showScoreboard();
 }
