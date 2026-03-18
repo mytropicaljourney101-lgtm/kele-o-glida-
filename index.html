@@ -72,7 +72,7 @@ function drawAvatarInElement(id,charId){
 
 function showMenu(){
   state='menu';
-  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח וקפוץ עם החץ למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
+  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות. לחיצה מהירה על רווח = ספרינט. חץ למעלה = קפיצה </p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
   drawAvatarInElement('avatar-h','h');
   drawAvatarInElement('avatar-r','r');
   document.querySelectorAll('.character-card').forEach(card=>card.addEventListener('click',()=>{selectedCharacter=card.dataset.char;showMenu()}));
