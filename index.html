@@ -251,19 +251,18 @@ function showMenu(){
   if(isNarrowMobile()){
     const currentName = selectedCharacter==='h' ? 'חזן' : 'רווח';
     setOverlay(
-      '<div class="panel" style="width:min(94vw,420px)">'+
-        '<div class="title" style="font-size:clamp(30px,9vw,44px)">'+TITLE+'</div>'+
-        '<p class="subtitle" style="margin-top:8px">גרסת מובייל</p>'+
-        '<div style="margin:16px auto 8px;width:min(180px,48vw);height:min(180px,48vw);border:3px solid rgba(255,255,255,.2);border-radius:20px;overflow:hidden;background:#1c2030" id="mobile-avatar"></div>'+
-        '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 6px">'+
-          '<button id="prevCharBtn" type="button" class="secondary" style="width:64px;min-height:48px;padding:10px 0">◀</button>'+
-          '<div style="min-width:120px;font-size:clamp(22px,6vw,30px);font-weight:bold">'+currentName+'</div>'+
-          '<button id="nextCharBtn" type="button" class="secondary" style="width:64px;min-height:48px;padding:10px 0">▶</button>'+
+      '<div class="panel" style="width:min(94vw,380px);max-height:min(92vh,560px);padding:14px 12px 16px;overflow:hidden">'+
+        '<div class="title" style="font-size:clamp(26px,8vw,38px);margin-bottom:4px">'+TITLE+'</div>'+
+        '<div style="margin:8px auto 6px;width:min(112px,28vw);height:min(112px,28vw);border:3px solid rgba(255,255,255,.2);border-radius:18px;overflow:hidden;background:#1c2030" id="mobile-avatar"></div>'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0 2px">'+
+          '<button id="prevCharBtn" type="button" class="secondary" style="width:54px;min-height:44px;padding:8px 0">◀</button>'+
+          '<div style="min-width:96px;font-size:clamp(20px,5.6vw,26px);font-weight:bold">'+currentName+'</div>'+
+          '<button id="nextCharBtn" type="button" class="secondary" style="width:54px;min-height:44px;padding:8px 0">▶</button>'+
         '</div>'+
-        '<p class="subtitle" style="font-size:clamp(14px,4vw,17px);margin-top:4px">נגיעה במסך = ספרינט<br>החלקה למעלה = קפיצה</p>'+
-        '<div class="menu-buttons" style="margin-top:16px">'+
-          '<button id="startBtn" type="button" style="width:100%;font-size:clamp(22px,5vw,28px);min-height:58px">התחל משחק</button>'+
-          '<button id="scoresBtn" type="button" class="secondary" style="width:100%">לוח תוצאות</button>'+
+        '<p class="subtitle" style="font-size:clamp(12px,3.5vw,15px);margin:4px 0 10px;line-height:1.3">נגיעה = ספרינט · החלקה למעלה = קפיצה</p>'+
+        '<div class="menu-buttons" style="margin-top:8px;gap:8px">'+
+          '<button id="startBtn" type="button" style="width:100%;font-size:clamp(20px,5vw,24px);min-height:52px;padding:10px 12px">התחל משחק</button>'+
+          '<button id="scoresBtn" type="button" class="secondary" style="width:100%;min-height:48px;padding:10px 12px">לוח תוצאות</button>'+
         '</div>'+
       '</div>'
     );
@@ -325,7 +324,22 @@ document.addEventListener('keydown',e=>{
 canvas.addEventListener('touchstart',e=>{ if(shouldShowRotateWarning()) return; if(state==='cover'){ e.preventDefault(); showMenu(); return; } if(state!=='playing') return; const t=e.changedTouches[0]; touchStartX=t.clientX; touchStartY=t.clientY; touchStartTime=performance.now(); e.preventDefault(); },{passive:false});
 canvas.addEventListener('touchend',e=>{ if(shouldShowRotateWarning()) return; if(state!=='playing') return; const t=e.changedTouches[0]; const dx=t.clientX-touchStartX, dy=t.clientY-touchStartY, absX=Math.abs(dx), absY=Math.abs(dy), elapsed=performance.now()-touchStartTime; if(dy<-50&&absY>absX) doJump(player); else if(elapsed<260) doSprintTap(); e.preventDefault(); },{passive:false});
 
-function spawnDust(r){ for(let i=0;i<4;i++) r.dust.push({x:r.x+20+Math.random()*18,y:r.baseY+r.jumpY+42+Math.random()*8,vx:-1-Math.random()*2,vy:-0.2-Math.random()*0.8,life:0.6+Math.random()*0.4,size:4+Math.random()*6}); }
+function spawnDust(r){
+  const m=metrics();
+  const unit=m.S;
+  const xOffset=18*unit;
+  const yOffset=42*unit;
+  for(let i=0;i<4;i++){
+    r.dust.push({
+      x:r.x + xOffset + Math.random()*(16*unit),
+      y:r.baseY + r.jumpY + yOffset + Math.random()*(8*unit),
+      vx:(-1-Math.random()*2)*unit,
+      vy:(-0.2-Math.random()*0.8)*unit,
+      life:0.6+Math.random()*0.4,
+      size:(4+Math.random()*6)*unit
+    });
+  }
+}
 function updateDust(list,dt){ for(let i=list.length-1;i>=0;i--){ const p=list[i]; p.x+=p.vx*60*dt; p.y+=p.vy*60*dt; p.life-=dt; p.size*=0.985; if(p.life<=0) list.splice(i,1); } }
 function updateJump(r,dt){ if(!r.isJumping) return; r.jumpV+=34*dt*Math.min(1.3,Math.max(0.85,canvas.height/720)); r.jumpY+=r.jumpV; if(r.jumpY>=0){ r.jumpY=0; r.jumpV=0; r.isJumping=false; } }
 function triggerGameOver(){ winner='enemy'; finishTime=performance.now(); gameOverReason='נתפסת על פאק באמינות עכשיו תישלח למעצר בבסיס סודי של חיל האוויר'; showResult(); }
@@ -336,7 +350,16 @@ function drawSky(){ const {W,H}=metrics(); const sky=ctx.createLinearGradient(0,
 function drawCactus(x,y,s=1){ ctx.save(); ctx.translate(x,y); ctx.scale(s,s); ctx.fillStyle='#2c8e50'; ctx.fillRect(-8,-46,16,50); ctx.fillRect(-22,-30,12,10); ctx.fillRect(10,-34,12,10); ctx.fillRect(-22,-52,10,22); ctx.fillRect(12,-56,10,22); ctx.restore(); }
 function drawIceCream(x,y,s){ ctx.fillStyle='#c17d3d'; ctx.beginPath(); ctx.moveTo(x,y+18*s); ctx.lineTo(x+18*s,y+18*s); ctx.lineTo(x+9*s,y+42*s); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f49ac2'; ctx.beginPath(); ctx.arc(x+9*s,y+8*s,12*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#9ae6ff'; ctx.beginPath(); ctx.arc(x+22*s,y+12*s,10*s,0,Math.PI*2); ctx.fill(); }
 function drawGround(){ const m=metrics(); ctx.save(); ctx.translate(-cameraX,0); ctx.fillStyle='#d6a85a'; ctx.fillRect(cameraX-40,m.H*0.50,m.W+m.worldLength,m.H*0.50); ctx.fillStyle='#c79247'; for(let i=0;i<m.worldLength+800;i+=Math.max(18,m.W*0.018)) ctx.fillRect(i,m.H*0.72+((i/24)%2)*4,Math.max(8,m.W*0.008),Math.max(3,m.H*0.004)); ctx.fillStyle='#454a52'; ctx.fillRect(0,m.roadY,m.worldLength,m.roadH); ctx.strokeStyle='#f6d04d'; ctx.lineWidth=Math.max(3,m.W*0.004); ctx.setLineDash([Math.max(12,m.W*0.018),Math.max(10,m.W*0.014)]); ctx.beginPath(); ctx.moveTo(0,m.roadY+m.roadH/2); ctx.lineTo(m.worldLength,m.roadY+m.roadH/2); ctx.stroke(); ctx.setLineDash([]); for(let i=0;i<40;i++) drawCactus(150+i*(m.W*0.16)+(i%3)*25,m.H*(0.58+(i%4)*0.09),0.75+(i%2)*0.18); ctx.fillStyle='#f7f1d5'; ctx.fillRect(m.finishX,m.roadY-16*m.S,12*m.S,m.roadH+30*m.S); for(let y=m.roadY-16*m.S;y<m.roadY+m.roadH+20*m.S;y+=18*m.S){ ctx.fillStyle=Math.round(y/(18*m.S))%2===0?'#111':'#fff'; ctx.fillRect(m.finishX+12*m.S,y,18*m.S,18*m.S); } drawIceCream(m.finishX+60*m.S,m.roadY+40*m.S,m.S); drawIceCream(m.finishX+60*m.S,m.roadY+82*m.S,m.S); ctx.restore(); }
-function drawDust(list){ for(const p of list){ const sx=p.x-cameraX; if(sx<-30||sx>canvas.width+30) continue; ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle='#f7d7a9'; ctx.fillRect(sx,p.y,p.size,p.size); } ctx.globalAlpha=1; }
+function drawDust(list){
+  for(const p of list){
+    const sx=p.x-cameraX;
+    if(sx<-40||sx>canvas.width+40) continue;
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle='#f7d7a9';
+    ctx.fillRect(sx,p.y,p.size,p.size);
+  }
+  ctx.globalAlpha=1;
+}
 function drawRunner(r){ const m=metrics(), unit=m.S, bob=r.isJumping?0:Math.sin(r.anim*8)*3*unit, x=r.x-cameraX, y=r.baseY+r.jumpY+bob, frame=Math.floor(r.anim*10)%4; if(x<-80||x>m.W+80) return; drawDust(r.dust); const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r'; const legA=r.isJumping?-16:frame===0?16:frame===1?6:frame===2?-10:2, legB=r.isJumping?18:-legA*0.8, armA=r.isJumping?-22:-legA*0.7, armB=r.isJumping?20:-armA*0.7; const limb=(x1,y1,len,angle,color,width)=>{ const rad=angle*Math.PI/180; ctx.strokeStyle=color; ctx.lineWidth=width*unit; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit); ctx.stroke(); }; limb(x+18*unit,y+40*unit,20,90+legA,uniformDark,10); limb(x+18*unit,y+40*unit,20,90+legB,uniformDark,10); limb(x+18*unit,y+22*unit,16,90+armA,skin,8); limb(x+18*unit,y+22*unit,16,90+armB,skin,8); ctx.fillStyle=uniform; ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit); ctx.fillStyle=uniformDark; ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit); ctx.fillStyle=strap; ctx.fillRect(x+18*unit,y+10*unit,6*unit,28*unit); ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2); ctx.fill(); ctx.fillStyle=hair; ctx.beginPath(); ctx.arc(x+18*unit,y-1*unit,15*unit,Math.PI,Math.PI*2); ctx.fill(); ctx.fillRect(x+6*unit,y-1*unit,24*unit,5*unit); ctx.fillStyle='#111'; ctx.fillRect(x+11*unit,y+18*unit,4*unit,4*unit); ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit); ctx.fillStyle='#8a3a2c'; ctx.fillRect(x+14*unit,y+24*unit,8*unit,2*unit); if(beard){ ctx.fillStyle='#1b1b1b'; ctx.fillRect(x+10*unit,y+23*unit,16*unit,8*unit); ctx.fillRect(x+12*unit,y+30*unit,12*unit,5*unit); } else { ctx.fillStyle='#2b2b2b'; ctx.fillRect(x+12*unit,y+24*unit,11*unit,5*unit); } }
 function drawOfficer(){ const m=metrics(); if(!officer.active) return; const x=officer.x-cameraX; if(x<-120||x>m.W+120) return; const unit=m.S, y=player.baseY+Math.sin(lastTime*0.03)*2*unit, frame=Math.floor(lastTime*0.02)%4, legA=frame===0?18:frame===1?4:frame===2?-12:2, legB=-legA*0.8, armA=-legA*0.7, armB=-armA*0.7; const limb=(x1,y1,len,angle,color,width)=>{ const rad=angle*Math.PI/180; ctx.strokeStyle=color; ctx.lineWidth=width*unit; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit); ctx.stroke(); }; limb(x+18*unit,y+40*unit,20,90+legA,'#22334f',10); limb(x+18*unit,y+40*unit,20,90+legB,'#22334f',10); limb(x+18*unit,y+22*unit,16,90+armA,'#f1c27d',8); limb(x+18*unit,y+22*unit,16,90+armB,'#f1c27d',8); ctx.fillStyle='#445a88'; ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit); ctx.fillStyle='#22334f'; ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit); ctx.fillStyle='#f1c27d'; ctx.beginPath(); ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#111'; ctx.fillRect(x+4*unit,y-8*unit,28*unit,9*unit); ctx.fillRect(x+10*unit,y-2*unit,16*unit,3*unit); ctx.fillRect(x+12*unit,y+18*unit,4*unit,4*unit); ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit); ctx.fillStyle='#8a3a2c'; ctx.fillRect(x+12*unit,y+25*unit,12*unit,2*unit); ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(x-8*unit,y-26*unit,56*unit,18*unit); ctx.fillStyle='#fff6d6'; ctx.font='bold '+Math.max(12,m.W*0.011)+'px Arial'; ctx.textAlign='center'; ctx.fillText('דודי',x+18*unit,y-12*unit); }
 function drawHud(now){ if(state!=='playing') return; const l=layout(), m=metrics(); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(l.hudX,l.hudY,l.hudW,l.hudH); ctx.strokeStyle='#ffd166'; ctx.lineWidth=Math.max(2,m.W*0.0025); ctx.strokeRect(l.hudX,l.hudY,l.hudW,l.hudH); ctx.fillStyle='#fff6d6'; ctx.font='bold '+l.hudTitleFont+'px Arial'; ctx.textAlign='right'; ctx.fillText('ספרינט: רווח או נגיעה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8); ctx.fillText('קפיצה: חץ או החלקה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18); ctx.font=l.hudBodyFont+'px Arial'; ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),l.hudX+l.hudW-14,l.hudY+l.hudH-44); ctx.fillText('דמות: '+player.name,l.hudX+l.hudW-14,l.hudY+l.hudH-24); ctx.fillText('זמן: '+formatTime(now-startTime),l.hudX+l.hudW-14,l.hudY+l.hudH-4); drawProgressBar(l.progressX,l.progressY,l.progressW,l.progressH,player.x,enemy.x); drawDistanceBar(l.distanceX,l.distanceY,l.distanceW,l.distanceH); if(countdown>0){ const boxW=m.W*0.26, boxH=m.H*0.06, x=(m.W-boxW)/2, y=m.H*0.13; ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(x,y,boxW,boxH); ctx.strokeStyle='#ffd166'; ctx.strokeRect(x,y,boxW,boxH); ctx.fillStyle='#fff'; ctx.font='bold '+Math.max(16,m.W*0.018)+'px Arial'; ctx.textAlign='center'; ctx.fillText('תזמון לא נכון = גיים אובר',x+boxW/2,y+boxH*0.68); } }
