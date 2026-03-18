@@ -219,6 +219,7 @@ function layout(){
   };
 }
 function isMobileLike(){ return window.matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+function isNarrowMobile(){ return isMobileLike() && window.innerWidth <= 700; }
 function shouldShowRotateWarning(){ return isMobileLike() && window.innerHeight>window.innerWidth; }
 function updateRotateWarning(){ rotateWarning.style.display=shouldShowRotateWarning()?'flex':'none'; }
 function setOverlay(html){ overlay.innerHTML=html; }
@@ -246,8 +247,38 @@ function drawAvatarInElement(id,charId){
 }
 function showMenu(){
   state='menu';
+
+  if(isNarrowMobile()){
+    const currentName = selectedCharacter==='h' ? 'חזן' : 'רווח';
+    setOverlay(
+      '<div class="panel" style="width:min(94vw,420px)">'+
+        '<div class="title" style="font-size:clamp(30px,9vw,44px)">'+TITLE+'</div>'+
+        '<p class="subtitle" style="margin-top:8px">גרסת מובייל</p>'+
+        '<div style="margin:16px auto 8px;width:min(180px,48vw);height:min(180px,48vw);border:3px solid rgba(255,255,255,.2);border-radius:20px;overflow:hidden;background:#1c2030" id="mobile-avatar"></div>'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 6px">'+
+          '<button id="prevCharBtn" type="button" class="secondary" style="width:64px;min-height:48px;padding:10px 0">◀</button>'+
+          '<div style="min-width:120px;font-size:clamp(22px,6vw,30px);font-weight:bold">'+currentName+'</div>'+
+          '<button id="nextCharBtn" type="button" class="secondary" style="width:64px;min-height:48px;padding:10px 0">▶</button>'+
+        '</div>'+
+        '<p class="subtitle" style="font-size:clamp(14px,4vw,17px);margin-top:4px">נגיעה במסך = ספרינט<br>החלקה למעלה = קפיצה</p>'+
+        '<div class="menu-buttons" style="margin-top:16px">'+
+          '<button id="startBtn" type="button" style="width:100%;font-size:clamp(22px,5vw,28px);min-height:58px">התחל משחק</button>'+
+          '<button id="scoresBtn" type="button" class="secondary" style="width:100%">לוח תוצאות</button>'+
+        '</div>'+
+      '</div>'
+    );
+
+    drawAvatarInElement('mobile-avatar', selectedCharacter);
+    document.getElementById('prevCharBtn').onclick = () => { selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); };
+    document.getElementById('nextCharBtn').onclick = () => { selectedCharacter = selectedCharacter==='h' ? 'r' : 'h'; showMenu(); };
+    document.getElementById('startBtn').onclick = () => startGame();
+    document.getElementById('scoresBtn').onclick = () => showScoreboard();
+    return;
+  }
+
   setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח או נגיעה, וקפוץ עם החץ למעלה או החלקה למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
-  drawAvatarInElement('avatar-h','h'); drawAvatarInElement('avatar-r','r');
+  drawAvatarInElement('avatar-h','h');
+  drawAvatarInElement('avatar-r','r');
   document.querySelectorAll('.character-card').forEach(card=>card.onclick=()=>{ selectedCharacter=card.dataset.char; showMenu(); });
   document.getElementById('startBtn').onclick=()=>startGame();
   document.getElementById('scoresBtn').onclick=()=>showScoreboard();
