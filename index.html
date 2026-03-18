@@ -41,46 +41,319 @@ const road={y:470,height:120}, worldLength=8200, finish={x:worldLength-260};
 const player={x:260,baseY:430,speed:0,mashBoost:0,anim:0,taps:[],cps:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'רווח',characterId:'r'};
 const enemy={x:220,baseY:520,speed:0,targetSpeed:0,anim:0,phase:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'חזן',characterId:'h'};
 const officer={active:false,x:0,speed:0,escaped:false,passedPlayer:false};
+
 function setOverlay(html){overlay.innerHTML=html}
 function formatTime(ms){return (ms/1000).toFixed(2)+' שניות'}
 function getScores(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return[]}}
 function saveScore(name,timeMs){const s=getScores();s.push({name:name||'שחקן',timeMs});s.sort((a,b)=>a.timeMs-b.timeMs);localStorage.setItem(STORAGE_KEY,JSON.stringify(s.slice(0,10)))}
 function escapeHtml(t){return t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function showCover(){state='cover';setOverlay('<div class="panel" style="background:rgba(10,10,18,.18);border-color:rgba(255,209,102,.5);min-width:min(92vw,520px)"><p class="subtitle" style="margin:0;font-size:clamp(20px,2.8vw,30px)">לחץ על מקש כלשהו כדי להתחיל</p></div>')}
-function drawAvatarInElement(id,charId){const host=document.getElementById(id);if(!host)return;host.innerHTML='<canvas width="132" height="132" style="width:132px;height:132px;display:block"></canvas>';const c=host.querySelector('canvas'),g=c.getContext('2d');const x=66,y=48,skin='#f1c27d',uniform='#738c3a',uniformDark='#4c6124',hair='#171717';g.fillStyle=uniform;g.fillRect(x-28,y+24,56,72);g.fillStyle=uniformDark;g.fillRect(x-28,y+76,56,16);g.fillStyle='#222a30';g.fillRect(x-4,y+24,8,72);g.fillStyle=skin;g.fillRect(x-8,y+10,16,16);g.beginPath();g.arc(x,y,30,0,Math.PI*2);g.fill();g.fillStyle=hair;g.beginPath();g.arc(x,y-4,31,Math.PI,Math.PI*2);g.fill();g.fillRect(x-24,y-4,48,9);g.fillStyle='#111';g.fillRect(x-13,y+2,5,5);g.fillRect(x+8,y+2,5,5);g.fillRect(x-15,y-6,10,3);g.fillRect(x+5,y-6,10,3);g.fillStyle='#8a3a2c';g.fillRect(x-6,y+15,12,2);if(charId==='r'){g.fillStyle='#181818';g.fillRect(x-16,y+14,32,10);g.fillRect(x-12,y+24,24,8)}else{g.fillStyle='#252525';g.fillRect(x-10,y+15,20,6)}}
-function showMenu(){state='menu';setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח וקפוץ עם החץ למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');drawAvatarInElement('avatar-h','h');drawAvatarInElement('avatar-r','r');document.querySelectorAll('.character-card').forEach(card=>card.addEventListener('click',()=>{selectedCharacter=card.dataset.char;showMenu()}));document.getElementById('startBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();startGame()});document.getElementById('scoresBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showScoreboard()})}
-function showScoreboard(){state='scoreboard';const scores=getScores();const rows=scores.length?scores.map((s,i)=>'<div class="score-row"><span>'+(i+1)+'. '+escapeHtml(s.name)+'</span><span>'+formatTime(s.timeMs)+'</span></div>').join(''):'<div class="score-row"><span>עדיין אין תוצאות</span><span>—</span></div>';setOverlay('<div class="panel"><div class="title">לוח תוצאות</div><div class="score-list">'+rows+'</div><button id="backBtn" type="button" class="secondary">חזור</button></div>');document.getElementById('backBtn').onclick=showMenu}
-function showResult(){const won=winner==='player';state='result';setOverlay('<div class="panel"><div class="title" style="font-size:clamp(36px,6vw,64px)">'+(won?'🍦 גלידה!':'🚔 גיים אובר')+'</div><p class="subtitle" style="font-size:clamp(20px,3vw,30px)">'+(won?'סיימת את המדס ולא נפלת על דודי. כל השאר זה בונוס!':gameOverReason)+'</p><p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'קפוץ עם החץ למעלה כדי להימנע מדודי')+'</p>'+(won?'<input id="nameInput" class="name-input" maxlength="14" placeholder="כתוב שם ללוח התוצאות" />':'')+'<div class="menu-buttons">'+(won?'<button id="saveBtn" type="button">שמור תוצאה</button>':'')+'<button id="againBtn" type="button" class="secondary">שחק שוב</button><button id="menuBtn" type="button">לתפריט הראשי</button></div></div>');document.getElementById('againBtn').onclick=startGame;document.getElementById('menuBtn').onclick=showMenu;if(won){const input=document.getElementById('nameInput');input.value='שחקן';document.getElementById('saveBtn').onclick=()=>{if(scoreSaved)return;saveScore(input.value.trim()||'שחקן',finishTime-startTime);scoreSaved=true;showScoreboard()}}}
-function resetRacer(r,x,y){r.x=x;r.baseY=y;r.speed=0;r.anim=0;r.dust=[];r.jumpY=0;r.jumpV=0;r.isJumping=false;if(r.taps){r.taps=[];r.cps=0;r.mashBoost=0}if('phase'in r)r.phase=0;if('targetSpeed'in r)r.targetSpeed=0;altCheatTaps=[]}
-function startGame(){state='playing';overlay.innerHTML='';winner=null;scoreSaved=false;gameOverReason='';if(selectedCharacter==='r'){player.name='רווח';player.characterId='r';enemy.name='חזן';enemy.characterId='h'}else{player.name='חזן';player.characterId='h';enemy.name='רווח';enemy.characterId='r'}resetRacer(player,260,430);resetRacer(enemy,220,520);startTime=performance.now();finishTime=0;shake=0;flash=0;countdown=1.2;cameraX=0;officer.active=false;officer.escaped=false;officer.passedPlayer=false;spawnOfficer(true)}
-function spawnOfficer(initial=false){const buffer=initial?760:900+Math.random()*600;officer.active=true;officer.escaped=false;officer.passedPlayer=false;officer.x=player.x+buffer+520+Math.random()*240;officer.speed=10+Math.random()*2.5}
-function doJump(r){if(r.isJumping)return;r.isJumping=true;r.jumpV=-15.5;r.anim+=1.2;shake=Math.min(10,shake+1.5);flash=Math.max(flash,.08)}
-document.addEventListener('keydown',e=>{if(state==='cover'){showMenu();return}if(state==='playing'&&e.code==='ArrowUp'&&!e.repeat){e.preventDefault();doJump(player);return}if(state==='playing'&&(e.code==='AltLeft'||e.code==='AltRight')&&!e.repeat){e.preventDefault();const now=performance.now();altCheatTaps.push(now);altCheatTaps=altCheatTaps.filter(t=>now-t<=500);if(altCheatTaps.length>=4){player.speed+=14;player.mashBoost=Math.max(player.mashBoost,20);player.anim+=2;spawnDust(player);spawnDust(player);shake=Math.min(14,shake+2.6);flash=.22}return}if(state==='playing'&&e.code==='Space'&&!e.repeat){e.preventDefault();const now=performance.now();player.taps.push(now);player.taps=player.taps.filter(t=>now-t<=1000);player.cps=player.taps.length;player.mashBoost=Math.min(16,2.5+player.cps*.72);player.speed+=1.15+Math.min(player.cps*.14,1.45);player.anim+=1;spawnDust(player);shake=Math.min(10,shake+1.2);flash=.14}},{passive:false})
-function spawnDust(r){for(let i=0;i<4;i++)r.dust.push({x:r.x+20+Math.random()*18,y:r.baseY+r.jumpY+42+Math.random()*8,vx:-1-Math.random()*2,vy:-.2-Math.random()*.8,life:.6+Math.random()*.4,size:4+Math.random()*6})}
-function updateDust(list,dt){for(let i=list.length-1;i>=0;i--){const p=list[i];p.x+=p.vx*60*dt;p.y+=p.vy*60*dt;p.life-=dt;p.size*=.985;if(p.life<=0)list.splice(i,1)}}
-function updateJump(r,dt){if(!r.isJumping)return;r.jumpV+=34*dt;r.jumpY+=r.jumpV;if(r.jumpY>=0){r.jumpY=0;r.jumpV=0;r.isJumping=false}}
-function triggerGameOver(){winner='enemy';finishTime=performance.now();gameOverReason='נתפסת על פאק באמינות עכשיו תישלח למעצר בבסיס סודי של חיל האוויר';showResult()}
-function updateOfficer(dt){if(!officer.active)return;officer.x-=officer.speed*60*dt*.22;const gap=Math.abs((officer.x+6)-(player.x+18)),air=-player.jumpY;if(!officer.passedPlayer&&officer.x<player.x-12){officer.passedPlayer=true;officer.escaped=true}if(gap<30&&air<58){triggerGameOver();return}if(officer.x<cameraX-220||officer.escaped)spawnOfficer(false)}
-function updatePlaying(dt,now){if(countdown>0)countdown-=dt;player.taps=player.taps.filter(t=>now-t<=1000);player.cps=player.taps.length;player.mashBoost*=Math.pow(.62,dt);player.speed*=Math.pow(.55,dt);const pv=1.3+player.speed+player.mashBoost;player.x+=pv*60*dt*.18;player.anim+=pv*dt*.72;enemy.phase+=dt;const gap=player.x-enemy.x;const desired=pv*.985+Math.max(0,gap)*.0048-Math.max(0,-gap)*.0022;const eased=Math.max(1.8,desired+Math.sin(enemy.phase*3.8)*.16);enemy.targetSpeed+=(eased-enemy.targetSpeed)*Math.min(1,dt*2.3);enemy.speed+=(enemy.targetSpeed-enemy.speed)*Math.min(1,dt*3.1);enemy.speed=Math.max(1.6,enemy.speed);enemy.x+=enemy.speed*60*dt*.18;enemy.anim+=enemy.speed*dt*.72;if(Math.random()<.16)spawnDust(enemy);updateJump(player,dt);updateJump(enemy,dt);updateOfficer(dt);updateDust(player.dust,dt);updateDust(enemy.dust,dt);cameraX=Math.max(0,player.x-260);cameraX=Math.min(cameraX,finish.x-700);shake*=Math.pow(.18,dt);flash*=Math.pow(.07,dt);blink+=dt;if(player.x>=finish.x){winner='player';finishTime=now;showResult()}else if(enemy.x>=finish.x){winner='enemy';finishTime=now;gameOverReason=enemy.name+' חטף את הגלידה לפניך';showResult()}}
-function drawSky(){const sky=ctx.createLinearGradient(0,0,0,340);sky.addColorStop(0,'#5c3ea1');sky.addColorStop(.55,'#ef8d4b');sky.addColorStop(1,'#ffd28a');ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,360)}
-function drawCactus(x,y,s=1){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#2c8e50';ctx.fillRect(-8,-46,16,50);ctx.fillRect(-22,-30,12,10);ctx.fillRect(10,-34,12,10);ctx.fillRect(-22,-52,10,22);ctx.fillRect(12,-56,10,22);ctx.restore()}
-function drawIceCream(x,y){ctx.fillStyle='#c17d3d';ctx.beginPath();ctx.moveTo(x,y+18);ctx.lineTo(x+18,y+18);ctx.lineTo(x+9,y+42);ctx.closePath();ctx.fill();ctx.fillStyle='#f49ac2';ctx.beginPath();ctx.arc(x+9,y+8,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#9ae6ff';ctx.beginPath();ctx.arc(x+22,y+12,10,0,Math.PI*2);ctx.fill()}
-function drawGround(){ctx.save();ctx.translate(-cameraX,0);ctx.fillStyle='#d6a85a';ctx.fillRect(cameraX-40,360,canvas.width+worldLength,360);ctx.fillStyle='#c79247';for(let i=0;i<worldLength+800;i+=24)ctx.fillRect(i,520+((i/24)%2)*4,12,4);ctx.fillStyle='#454a52';ctx.fillRect(0,road.y,worldLength,road.height);ctx.strokeStyle='#f6d04d';ctx.lineWidth=6;ctx.setLineDash([22,18]);ctx.beginPath();ctx.moveTo(0,road.y+road.height/2);ctx.lineTo(worldLength,road.y+road.height/2);ctx.stroke();ctx.setLineDash([]);for(let i=0;i<40;i++)drawCactus(150+i*210+(i%3)*25,420+(i%4)*65,.75+(i%2)*.18);ctx.fillStyle='#f7f1d5';ctx.fillRect(finish.x,road.y-16,12,road.height+30);for(let y=road.y-16;y<road.y+road.height+20;y+=18){ctx.fillStyle=y%36===0?'#111':'#fff';ctx.fillRect(finish.x+12,y,18,18)}drawIceCream(finish.x+60,road.y+40);drawIceCream(finish.x+60,road.y+82);ctx.restore()}
-function drawDust(list){for(const p of list){const sx=p.x-cameraX;if(sx<-30||sx>canvas.width+30)continue;ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle='#f7d7a9';ctx.fillRect(sx,p.y,p.size,p.size)}ctx.globalAlpha=1}
-function drawRunner(r){const bob=r.isJumping?0:Math.sin(r.anim*8)*3,x=r.x-cameraX,y=r.baseY+r.jumpY+bob,frame=Math.floor(r.anim*10)%4;if(x<-80||x>canvas.width+80)return;drawDust(r.dust);const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r';const legA=r.isJumping?-16:frame===0?16:frame===1?6:frame===2?-10:2,legB=r.isJumping?18:-legA*.8,armA=r.isJumping?-22:-legA*.7,armB=r.isJumping?20:-armA*.7;const limb=(x1,y1,len,angle,color,width)=>{const rad=angle*Math.PI/180;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1+Math.cos(rad)*len,y1+Math.sin(rad)*len);ctx.stroke()};limb(x+18,y+40,20,90+legA,uniformDark,10);limb(x+18,y+40,20,90+legB,uniformDark,10);limb(x+18,y+22,16,90+armA,skin,8);limb(x+18,y+22,16,90+armB,skin,8);ctx.fillStyle=uniform;ctx.fillRect(x+4,y+10,28,28);ctx.fillStyle=uniformDark;ctx.fillRect(x+4,y+30,28,8);ctx.fillStyle=strap;ctx.fillRect(x+18,y+10,6,28);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(x+18,y+2,15,0,Math.PI*2);ctx.fill();ctx.fillStyle=hair;ctx.beginPath();ctx.arc(x+18,y-1,15,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(x+6,y-1,24,5);ctx.fillStyle='#111';ctx.fillRect(x+11,y+18,4,4);ctx.fillRect(x+21,y+18,4,4);ctx.fillStyle='#8a3a2c';ctx.fillRect(x+14,y+24,8,2);if(beard){ctx.fillStyle='#1b1b1b';ctx.fillRect(x+10,y+23,16,8);ctx.fillRect(x+12,y+30,12,5)}else{ctx.fillStyle='#2b2b2b';ctx.fillRect(x+12,y+24,11,5)}}
-function drawOfficer(){if(!officer.active)return;const x=officer.x-cameraX;if(x<-120||x>canvas.width+120)return;const y=player.baseY+Math.sin(last*.03)*2,frame=Math.floor(last*.02)%4,legA=frame===0?18:frame===1?4:frame===2?-12:2,legB=-legA*.8,armA=-legA*.7,armB=-armA*.7;const limb=(x1,y1,len,angle,color,width)=>{const rad=angle*Math.PI/180;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1+Math.cos(rad)*len,y1+Math.sin(rad)*len);ctx.stroke()};limb(x+18,y+40,20,90+legA,'#22334f',10);limb(x+18,y+40,20,90+legB,'#22334f',10);limb(x+18,y+22,16,90+armA,'#f1c27d',8);limb(x+18,y+22,16,90+armB,'#f1c27d',8);ctx.fillStyle='#445a88';ctx.fillRect(x+4,y+10,28,28);ctx.fillStyle='#22334f';ctx.fillRect(x+4,y+30,28,8);ctx.fillStyle='#f1c27d';ctx.beginPath();ctx.arc(x+18,y+2,15,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.fillRect(x+4,y-8,28,9);ctx.fillRect(x+10,y-2,16,3);ctx.fillRect(x+12,y+18,4,4);ctx.fillRect(x+21,y+18,4,4);ctx.fillStyle='#8a3a2c';ctx.fillRect(x+12,y+25,12,2);ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-8,y-26,56,18);ctx.fillStyle='#fff6d6';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText('דודי',x+18,y-12)}
-function drawHud(now){if(state!=='playing')return;ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(20,18,380,144);ctx.strokeStyle='#ffd166';ctx.lineWidth=3;ctx.strokeRect(20,18,380,144);ctx.fillStyle='#fff6d6';ctx.font='bold 24px Arial';ctx.textAlign='right';ctx.fillText('לחיצות זריזות על רווח = ספרינט',378,44);ctx.fillText('חץ למעלה = קפיצה',378,72);ctx.font='21px Arial';ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),378,104);ctx.fillText('דמות: '+player.name,378,132);ctx.fillText('זמן: '+formatTime(now-startTime),378,158);drawProgressBar(400,34,560,24,player.x,enemy.x);drawDistanceBar(980,24,270,34)}
-function drawProgressBar(x,y,w,h,pX,eX){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ffd166';ctx.lineWidth=3;ctx.strokeRect(x,y,w,h);const start=260,end=finish.x,pT=Math.min(1,Math.max(0,(pX-start)/(end-start))),eT=Math.min(1,Math.max(0,(eX-start)/(end-start)));ctx.fillStyle='#5eead4';ctx.fillRect(x+pT*w-6,y-4,12,h+8);ctx.fillStyle='#ff7b72';ctx.fillRect(x+eT*w-6,y-4,12,h+8);ctx.fillStyle='#fff';ctx.font='18px Arial';ctx.textAlign='center';ctx.fillText(player.name,x+pT*w,y+h+22);ctx.fillText(enemy.name,x+eT*w,y+h+22)}
-function drawDistanceBar(x,y,w,h){ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ffd166';ctx.strokeRect(x,y,w,h);const ratio=Math.min(1,Math.max(0,player.x/finish.x));ctx.fillStyle='#84fab0';ctx.fillRect(x+4,y+4,(w-8)*ratio,h-8);ctx.fillStyle='#fff';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.fillText('התקדמות בכביש 90',x+w/2,y+22)}
-function drawTitleOnCanvas(){if(state==='cover'){const a=.45+(Math.sin(blink*4)+1)*.25;ctx.globalAlpha=a;ctx.font='bold 32px Arial';ctx.textAlign='center';ctx.fillStyle='#d7fff7';ctx.fillText('לחץ על מקש כלשהו להתחיל',canvas.width/2,646);ctx.globalAlpha=1}}
-function drawCoverCharacter(x,y,id,smiling){const skin='#f1c27d',uniform='#738c3a',uniformDark='#4c6124',hair='#171717',beard=id==='r';ctx.fillStyle=uniform;ctx.fillRect(x-46,y+56,92,120);ctx.fillStyle=uniformDark;ctx.fillRect(x-46,y+148,92,28);ctx.fillStyle='#222a30';ctx.fillRect(x-6,y+56,12,120);ctx.fillStyle=skin;ctx.fillRect(x-12,y+34,24,24);ctx.beginPath();ctx.arc(x,y,54,0,Math.PI*2);ctx.fill();ctx.fillStyle=hair;ctx.beginPath();ctx.arc(x,y-8,55,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(x-44,y-8,88,15);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(x-50,y+2,10,0,Math.PI*2);ctx.arc(x+50,y+2,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.fillRect(x-23,y-2,9,9);ctx.fillRect(x+14,y-2,9,9);ctx.fillRect(x-28,y-12,18,4);ctx.fillRect(x+10,y-12,18,4);ctx.fillStyle='#d79f68';ctx.fillRect(x-3,y+8,6,14);ctx.fillStyle=smiling?'#fff':'#6c2a21';if(smiling){ctx.fillRect(x-13,y+28,26,8);ctx.fillStyle='#cc8b8b';ctx.fillRect(x-13,y+34,26,4)}else{ctx.fillRect(x-12,y+30,24,4)}if(beard){ctx.fillStyle='#181818';ctx.fillRect(x-30,y+24,60,20);ctx.fillRect(x-24,y+42,48,14)}else{ctx.fillStyle='#252525';ctx.fillRect(x-18,y+25,36,10)}}
-function drawCoverBackground(){const sky=ctx.createLinearGradient(0,0,0,canvas.height);sky.addColorStop(0,'#1f2d5d');sky.addColorStop(.36,'#385b96');sky.addColorStop(.72,'#f09a4b');sky.addColorStop(1,'#f4d082');ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,canvas.height);const drawDune=(x,baseY,w,h)=>{ctx.beginPath();ctx.moveTo(x-w/2,baseY);ctx.quadraticCurveTo(x,baseY-h,x+w/2,baseY);ctx.closePath();ctx.fill()};ctx.fillStyle='#e2b56d';drawDune(200,370,260,90);drawDune(420,370,320,110);drawDune(650,370,240,80);drawDune(900,370,300,100);drawDune(1120,370,220,70);ctx.fillStyle='#d6a85a';ctx.fillRect(0,370,canvas.width,350);ctx.fillStyle='#c79247';for(let i=0;i<canvas.width;i+=28)ctx.fillRect(i,560+((i/28)%2)*4,13,4);ctx.fillStyle='#333842';ctx.beginPath();ctx.moveTo(250,720);ctx.bezierCurveTo(340,600,430,525,555,470);ctx.bezierCurveTo(670,420,785,408,920,418);ctx.bezierCurveTo(1060,430,1170,455,1280,500);ctx.lineTo(1280,720);ctx.closePath();ctx.fill();ctx.strokeStyle='#ffd54a';ctx.lineWidth=8;ctx.setLineDash([26,20]);ctx.beginPath();ctx.moveTo(760,720);ctx.bezierCurveTo(730,620,720,545,768,495);ctx.bezierCurveTo(835,445,958,438,1125,468);ctx.stroke();ctx.setLineDash([]);const cc=(x,y,s=1)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#2c8e50';ctx.fillRect(-9,-56,18,62);ctx.fillRect(-24,-37,12,12);ctx.fillRect(12,-33,12,12);ctx.fillRect(-24,-58,10,22);ctx.fillRect(14,-56,10,22);ctx.restore()};cc(140,430,1.05);cc(260,420,.9);cc(420,415,.8);cc(610,410,.9);cc(760,418,.85);cc(930,412,.9);cc(1120,425,1);const fp=(x,y,s=.9)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#8b5a2b';ctx.fillRect(-3,-40,6,40);ctx.fillStyle='#2f8f4e';ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-20,-30);ctx.lineTo(-6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(20,-30);ctx.lineTo(6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-16,-44);ctx.lineTo(-4,-36);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(16,-44);ctx.lineTo(4,-36);ctx.fill();ctx.restore()};fp(350,418,.85);fp(540,408,.9);fp(720,402,.8);fp(980,410,.95);const glow=ctx.createRadialGradient(canvas.width/2,118,20,canvas.width/2,118,220);glow.addColorStop(0,'rgba(255,223,120,.34)');glow.addColorStop(1,'rgba(255,223,120,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,canvas.width,280);ctx.textAlign='center';ctx.lineWidth=8;ctx.strokeStyle='#5d2208';ctx.fillStyle='#ffe06e';ctx.font='bold 82px Arial';ctx.strokeText(TITLE,canvas.width/2,128);ctx.fillText(TITLE,canvas.width/2,128);drawCoverCharacter(180,370,'r',true);drawCoverCharacter(260,370,'h',false);const towerBaseX=canvas.width-220,towerBaseY=250;ctx.strokeStyle='#5c4a33';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(towerBaseX,towerBaseY+180);ctx.lineTo(towerBaseX+40,towerBaseY);ctx.moveTo(towerBaseX+120,towerBaseY+180);ctx.lineTo(towerBaseX+80,towerBaseY);ctx.stroke();ctx.fillStyle='#7a5a3a';ctx.fillRect(towerBaseX+20,towerBaseY-20,80,20);ctx.fillStyle='#9c7a4a';ctx.fillRect(towerBaseX+10,towerBaseY-70,100,50);ctx.fillStyle='#1e2a3a';ctx.fillRect(towerBaseX+35,towerBaseY-55,50,22);const guardX=towerBaseX+52,guardY=towerBaseY-65;ctx.fillStyle='#1b1b1b';ctx.fillRect(guardX-10,guardY+12,20,28);ctx.fillStyle='#ffd7a8';ctx.beginPath();ctx.arc(guardX,guardY,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2f5f2f';ctx.fillRect(guardX-13,guardY-12,26,8);ctx.fillStyle='#000';ctx.fillRect(guardX-6,guardY-2,3,3);ctx.fillRect(guardX+3,guardY-2,3,3);ctx.fillRect(guardX-30,guardY-4,24,8);ctx.fillStyle='#0f0f0f';ctx.beginPath();ctx.arc(guardX-30,guardY,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(guardX-8,guardY,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6ec1ff';ctx.fillRect(guardX-31,guardY-3,2,2);ctx.fillRect(guardX-9,guardY-3,2,2);ctx.strokeStyle='#1b1b1b';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(guardX-6,guardY+10);ctx.lineTo(guardX-18,guardY+2);ctx.moveTo(guardX+6,guardY+10);ctx.lineTo(guardX-10,guardY+2);ctx.stroke();ctx.fillStyle='#5e3e24';ctx.beginPath();ctx.moveTo(towerBaseX,towerBaseY-70);ctx.lineTo(towerBaseX+60,towerBaseY-100);ctx.lineTo(towerBaseX+120,towerBaseY-70);ctx.closePath();ctx.fill();const innX=canvas.width-620,innY=300;ctx.fillStyle='#c48a4a';ctx.fillRect(innX,innY,240,110);ctx.fillStyle='#7a4e2b';ctx.beginPath();ctx.moveTo(innX-24,innY);ctx.lineTo(innX+120,innY-64);ctx.lineTo(innX+264,innY);ctx.closePath();ctx.fill();ctx.fillStyle='#1f2d3a';ctx.fillRect(innX+30,innY+30,34,28);ctx.fillRect(innX+90,innY+30,34,28);ctx.fillRect(innX+150,innY+30,34,28);ctx.fillStyle='#5e5e5e';ctx.fillRect(innX+118,innY-55,6,30);ctx.fillStyle='#fff';ctx.fillRect(innX+70,innY-85,120,30);ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeRect(innX+70,innY-85,120,30);ctx.fillStyle='#1e8f3a';ctx.font='bold 20px Arial';ctx.fillText('יטבתה',innX+130,innY-63);const palm=(x,y,s=1)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#8b5a2b';ctx.fillRect(-4,-60,8,60);ctx.fillStyle='#2f8f4e';ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(-30,-45);ctx.lineTo(-8,-40);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(30,-45);ctx.lineTo(8,-40);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(-26,-70);ctx.lineTo(-6,-54);ctx.fill();ctx.beginPath();ctx.moveTo(0,-60);ctx.lineTo(26,-70);ctx.lineTo(6,-54);ctx.fill();ctx.restore()};palm(innX-30,innY+12,1.6);palm(innX+260,innY+18,1.4);palm(innX+300,innY+20,1.2);const signX=canvas.width-380,signY=300;ctx.fillStyle='#5e5e5e';ctx.fillRect(signX+38,signY+30,10,90);ctx.fillStyle='#1f6ed4';ctx.fillRect(signX,signY-10,90,50);ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.strokeRect(signX,signY-10,90,50);ctx.fillStyle='#fff';ctx.font='bold 24px Arial';ctx.fillText('כביש 90',signX+45,signY+22);ctx.fillStyle='rgba(0,0,0,.10)';ctx.fillRect(0,0,canvas.width,canvas.height)}
+
+function showCover(){
+  state='cover';
+  setOverlay('');
+}
+
+function drawAvatarInElement(id,charId){
+  const host=document.getElementById(id);if(!host)return;
+  host.innerHTML='<canvas width="132" height="132" style="width:132px;height:132px;display:block"></canvas>';
+  const c=host.querySelector('canvas'),g=c.getContext('2d');
+  const x=66,y=48,skin='#f1c27d',uniform='#738c3a',uniformDark='#4c6124',hair='#171717';
+  g.fillStyle=uniform;g.fillRect(x-28,y+24,56,72);
+  g.fillStyle=uniformDark;g.fillRect(x-28,y+76,56,16);
+  g.fillStyle='#222a30';g.fillRect(x-4,y+24,8,72);
+  g.fillStyle=skin;g.fillRect(x-8,y+10,16,16);
+  g.beginPath();g.arc(x,y,30,0,Math.PI*2);g.fill();
+  g.fillStyle=hair;g.beginPath();g.arc(x,y-4,31,Math.PI,Math.PI*2);g.fill();g.fillRect(x-24,y-4,48,9);
+  g.fillStyle='#111';g.fillRect(x-13,y+2,5,5);g.fillRect(x+8,y+2,5,5);g.fillRect(x-15,y-6,10,3);g.fillRect(x+5,y-6,10,3);
+  g.fillStyle='#8a3a2c';g.fillRect(x-6,y+15,12,2);
+  if(charId==='r'){g.fillStyle='#181818';g.fillRect(x-16,y+14,32,10);g.fillRect(x-12,y+24,24,8)}
+  else{g.fillStyle='#252525';g.fillRect(x-10,y+15,20,6)}
+}
+
+function showMenu(){
+  state='menu';
+  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח וקפוץ עם החץ למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
+  drawAvatarInElement('avatar-h','h');
+  drawAvatarInElement('avatar-r','r');
+  document.querySelectorAll('.character-card').forEach(card=>card.addEventListener('click',()=>{selectedCharacter=card.dataset.char;showMenu()}));
+  document.getElementById('startBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();startGame()});
+  document.getElementById('scoresBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showScoreboard()});
+}
+
+function showScoreboard(){
+  state='scoreboard';
+  const scores=getScores();
+  const rows=scores.length?scores.map((s,i)=>'<div class="score-row"><span>'+(i+1)+'. '+escapeHtml(s.name)+'</span><span>'+formatTime(s.timeMs)+'</span></div>').join(''):'<div class="score-row"><span>עדיין אין תוצאות</span><span>—</span></div>';
+  setOverlay('<div class="panel"><div class="title">לוח תוצאות</div><div class="score-list">'+rows+'</div><button id="backBtn" type="button" class="secondary">חזור</button></div>');
+  document.getElementById('backBtn').onclick=showMenu;
+}
+
+function showResult(){
+  const won=winner==='player';
+  state='result';
+  setOverlay('<div class="panel"><div class="title" style="font-size:clamp(36px,6vw,64px)">'+(won?'🍦 גלידה!':'🚔 גיים אובר')+'</div><p class="subtitle" style="font-size:clamp(20px,3vw,30px)">'+(won?'סיימת את המדס ולא נפלת על דודי. כל השאר זה בונוס!':gameOverReason)+'</p><p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'קפוץ עם החץ למעלה כדי להימנע מדודי')+'</p>'+(won?'<input id="nameInput" class="name-input" maxlength="14" placeholder="כתוב שם ללוח התוצאות" />':'')+'<div class="menu-buttons">'+(won?'<button id="saveBtn" type="button">שמור תוצאה</button>':'')+'<button id="againBtn" type="button" class="secondary">שחק שוב</button><button id="menuBtn" type="button">לתפריט הראשי</button></div></div>');
+  document.getElementById('againBtn').onclick=startGame;
+  document.getElementById('menuBtn').onclick=showMenu;
+  if(won){
+    const input=document.getElementById('nameInput');
+    input.value='שחקן';
+    document.getElementById('saveBtn').onclick=()=>{
+      if(scoreSaved)return;
+      saveScore(input.value.trim()||'שחקן',finishTime-startTime);
+      scoreSaved=true;
+      showScoreboard();
+    }
+  }
+}
+
+function resetRacer(r,x,y){
+  r.x=x;r.baseY=y;r.speed=0;r.anim=0;r.dust=[];r.jumpY=0;r.jumpV=0;r.isJumping=false;
+  if(r.taps){r.taps=[];r.cps=0;r.mashBoost=0}
+  if('phase'in r)r.phase=0;
+  if('targetSpeed'in r)r.targetSpeed=0;
+  altCheatTaps=[];
+}
+
+function startGame(){
+  state='playing';
+  overlay.innerHTML='';
+  winner=null;scoreSaved=false;gameOverReason='';
+  if(selectedCharacter==='r'){player.name='רווח';player.characterId='r';enemy.name='חזן';enemy.characterId='h'}
+  else{player.name='חזן';player.characterId='h';enemy.name='רווח';enemy.characterId='r'}
+  resetRacer(player,260,430);
+  resetRacer(enemy,220,520);
+  startTime=performance.now();finishTime=0;shake=0;flash=0;countdown=1.2;cameraX=0;
+  officer.active=false;officer.escaped=false;officer.passedPlayer=false;
+  spawnOfficer(true);
+}
+
+function spawnOfficer(initial=false){
+  const buffer=initial?760:900+Math.random()*600;
+  officer.active=true;officer.escaped=false;officer.passedPlayer=false;
+  officer.x=player.x+buffer+520+Math.random()*240;
+  officer.speed=10+Math.random()*2.5;
+}
+
+function doJump(r){
+  if(r.isJumping)return;
+  r.isJumping=true;r.jumpV=-15.5;r.anim+=1.2;
+  shake=Math.min(10,shake+1.5);flash=Math.max(flash,.08);
+}
+
+document.addEventListener('keydown',e=>{
+  if(state==='cover'){showMenu();return}
+  if(state==='playing'&&e.code==='ArrowUp'&&!e.repeat){e.preventDefault();doJump(player);return}
+  if(state==='playing'&&(e.code==='AltLeft'||e.code==='AltRight')&&!e.repeat){
+    e.preventDefault();
+    const now=performance.now();
+    altCheatTaps.push(now);
+    altCheatTaps=altCheatTaps.filter(t=>now-t<=500);
+    if(altCheatTaps.length>=4){
+      player.speed+=14;player.mashBoost=Math.max(player.mashBoost,20);player.anim+=2;
+      spawnDust(player);spawnDust(player);shake=Math.min(14,shake+2.6);flash=.22
+    }
+    return
+  }
+  if(state==='playing'&&e.code==='Space'&&!e.repeat){
+    e.preventDefault();
+    const now=performance.now();
+    player.taps.push(now);
+    player.taps=player.taps.filter(t=>now-t<=1000);
+    player.cps=player.taps.length;
+    player.mashBoost=Math.min(16,2.5+player.cps*.72);
+    player.speed+=1.15+Math.min(player.cps*.14,1.45);
+    player.anim+=1;
+    spawnDust(player);
+    shake=Math.min(10,shake+1.2);
+    flash=.14
+  }
+},{passive:false});
+
+function spawnDust(r){
+  for(let i=0;i<4;i++)r.dust.push({x:r.x+20+Math.random()*18,y:r.baseY+r.jumpY+42+Math.random()*8,vx:-1-Math.random()*2,vy:-.2-Math.random()*.8,life:.6+Math.random()*.4,size:4+Math.random()*6})
+}
+
+function updateDust(list,dt){
+  for(let i=list.length-1;i>=0;i--){
+    const p=list[i];
+    p.x+=p.vx*60*dt;p.y+=p.vy*60*dt;p.life-=dt;p.size*=.985;
+    if(p.life<=0)list.splice(i,1)
+  }
+}
+
+function updateJump(r,dt){
+  if(!r.isJumping)return;
+  r.jumpV+=34*dt;r.jumpY+=r.jumpV;
+  if(r.jumpY>=0){r.jumpY=0;r.jumpV=0;r.isJumping=false}
+}
+
+function triggerGameOver(){
+  winner='enemy';
+  finishTime=performance.now();
+  gameOverReason='נתפסת על פאק באמינות עכשיו תישלח למעצר בבסיס סודי של חיל האוויר';
+  showResult();
+}
+
+function updateOfficer(dt){
+  if(!officer.active)return;
+  officer.x-=officer.speed*60*dt*.22;
+  const gap=Math.abs((officer.x+6)-(player.x+18)),air=-player.jumpY;
+  if(!officer.passedPlayer&&officer.x<player.x-12){officer.passedPlayer=true;officer.escaped=true}
+  if(gap<30&&air<58){triggerGameOver();return}
+  if(officer.x<cameraX-220||officer.escaped)spawnOfficer(false)
+}
+
+function updatePlaying(dt,now){
+  if(countdown>0)countdown-=dt;
+  player.taps=player.taps.filter(t=>now-t<=1000);
+  player.cps=player.taps.length;
+  player.mashBoost*=Math.pow(.62,dt);
+  player.speed*=Math.pow(.55,dt);
+  const pv=1.3+player.speed+player.mashBoost;
+  player.x+=pv*60*dt*.18;
+  player.anim+=pv*dt*.72;
+
+  enemy.phase+=dt;
+  const gap=player.x-enemy.x;
+  const desired=pv*.985+Math.max(0,gap)*.0048-Math.max(0,-gap)*.0022;
+  const eased=Math.max(1.8,desired+Math.sin(enemy.phase*3.8)*.16);
+  enemy.targetSpeed+=(eased-enemy.targetSpeed)*Math.min(1,dt*2.3);
+  enemy.speed+=(enemy.targetSpeed-enemy.speed)*Math.min(1,dt*3.1);
+  enemy.speed=Math.max(1.6,enemy.speed);
+  enemy.x+=enemy.speed*60*dt*.18;
+  enemy.anim+=enemy.speed*dt*.72;
+  if(Math.random()<.16)spawnDust(enemy);
+
+  updateJump(player,dt);updateJump(enemy,dt);updateOfficer(dt);
+  updateDust(player.dust,dt);updateDust(enemy.dust,dt);
+  cameraX=Math.max(0,player.x-260);
+  cameraX=Math.min(cameraX,finish.x-700);
+  shake*=Math.pow(.18,dt);flash*=Math.pow(.07,dt);blink+=dt;
+
+  if(player.x>=finish.x){winner='player';finishTime=now;showResult()}
+  else if(enemy.x>=finish.x){winner='enemy';finishTime=now;gameOverReason=enemy.name+' חטף את הגלידה לפניך';showResult()}
+}
+
+function drawSky(){
+  const sky=ctx.createLinearGradient(0,0,0,340);
+  sky.addColorStop(0,'#5c3ea1');sky.addColorStop(.55,'#ef8d4b');sky.addColorStop(1,'#ffd28a');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,360);
+}
+
+function drawCactus(x,y,s=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#2c8e50';
+  ctx.fillRect(-8,-46,16,50);ctx.fillRect(-22,-30,12,10);ctx.fillRect(10,-34,12,10);ctx.fillRect(-22,-52,10,22);ctx.fillRect(12,-56,10,22);
+  ctx.restore();
+}
+
+function drawIceCream(x,y){
+  ctx.fillStyle='#c17d3d';ctx.beginPath();ctx.moveTo(x,y+18);ctx.lineTo(x+18,y+18);ctx.lineTo(x+9,y+42);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f49ac2';ctx.beginPath();ctx.arc(x+9,y+8,12,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#9ae6ff';ctx.beginPath();ctx.arc(x+22,y+12,10,0,Math.PI*2);ctx.fill();
+}
+
+function drawGround(){
+  ctx.save();ctx.translate(-cameraX,0);
+  ctx.fillStyle='#d6a85a';ctx.fillRect(cameraX-40,360,canvas.width+worldLength,360);
+  ctx.fillStyle='#c79247';for(let i=0;i<worldLength+800;i+=24)ctx.fillRect(i,520+((i/24)%2)*4,12,4);
+  ctx.fillStyle='#454a52';ctx.fillRect(0,road.y,worldLength,road.height);
+  ctx.strokeStyle='#f6d04d';ctx.lineWidth=6;ctx.setLineDash([22,18]);ctx.beginPath();ctx.moveTo(0,road.y+road.height/2);ctx.lineTo(worldLength,road.y+road.height/2);ctx.stroke();ctx.setLineDash([]);
+  for(let i=0;i<40;i++)drawCactus(150+i*210+(i%3)*25,420+(i%4)*65,.75+(i%2)*.18);
+  ctx.fillStyle='#f7f1d5';ctx.fillRect(finish.x,road.y-16,12,road.height+30);
+  for(let y=road.y-16;y<road.y+road.height+20;y+=18){ctx.fillStyle=y%36===0?'#111':'#fff';ctx.fillRect(finish.x+12,y,18,18)}
+  drawIceCream(finish.x+60,road.y+40);drawIceCream(finish.x+60,road.y+82);
+  ctx.restore();
+}
+
+function drawDust(list){
+  for(const p of list){
+    const sx=p.x-cameraX;
+    if(sx<-30||sx>canvas.width+30)continue;
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle='#f7d7a9';
+    ctx.fillRect(sx,p.y,p.size,p.size)
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawRunner(r){
+  const bob=r.isJumping?0:Math.sin(r.anim*8)*3,x=r.x-cameraX,y=r.baseY+r.jumpY+bob,frame=Math.floor(r.anim*10)%4;
+  if(x<-80||x>canvas.width+80)return;
+  drawDust(r.dust);
+  const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r';
+  const legA=r.isJumping?-16:frame===0?16:frame===1?6:frame===2?-10:2,legB=r.isJumping?18:-legA*.8,armA=r.isJumping?-22:-legA*.7,armB=r.isJumping?20:-armA*.7;
+  const limb=(x1,y1,len,angle,color,width)=>{const rad=angle*Math.PI/180;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1+Math.cos(rad)*len,y1+Math.sin(rad)*len);ctx.stroke()};
+  limb(x+18,y+40,20,90+legA,uniformDark,10);limb(x+18,y+40,20,90+legB,uniformDark,10);limb(x+18,y+22,16,90+armA,skin,8);limb(x+18,y+22,16,90+armB,skin,8);
+  ctx.fillStyle=uniform;ctx.fillRect(x+4,y+10,28,28);ctx.fillStyle=uniformDark;ctx.fillRect(x+4,y+30,28,8);ctx.fillStyle=strap;ctx.fillRect(x+18,y+10,6,28);
+  ctx.fillStyle=skin;ctx.beginPath();ctx.arc(x+18,y+2,15,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=hair;ctx.beginPath();ctx.arc(x+18,y-1,15,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(x+6,y-1,24,5);
+  ctx.fillStyle='#111';ctx.fillRect(x+11,y+18,4,4);ctx.fillRect(x+21,y+18,4,4);ctx.fillStyle='#8a3a2c';ctx.fillRect(x+14,y+24,8,2);
+  if(beard){ctx.fillStyle='#1b1b1b';ctx.fillRect(x+10,y+23,16,8);ctx.fillRect(x+12,y+30,12,5)}else{ctx.fillStyle='#2b2b2b';ctx.fillRect(x+12,y+24,11,5)}
+}
+
+function drawOfficer(){
+  if(!officer.active)return;
+  const x=officer.x-cameraX;
+  if(x<-120||x>canvas.width+120)return;
+  const y=player.baseY+Math.sin(last*.03)*2,frame=Math.floor(last*.02)%4,legA=frame===0?18:frame===1?4:frame===2?-12:2,legB=-legA*.8,armA=-legA*.7,armB=-armA*.7;
+  const limb=(x1,y1,len,angle,color,width)=>{const rad=angle*Math.PI/180;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1+Math.cos(rad)*len,y1+Math.sin(rad)*len);ctx.stroke()};
+  limb(x+18,y+40,20,90+legA,'#22334f',10);limb(x+18,y+40,20,90+legB,'#22334f',10);limb(x+18,y+22,16,90+armA,'#f1c27d',8);limb(x+18,y+22,16,90+armB,'#f1c27d',8);
+  ctx.fillStyle='#445a88';ctx.fillRect(x+4,y+10,28,28);ctx.fillStyle='#22334f';ctx.fillRect(x+4,y+30,28,8);ctx.fillStyle='#f1c27d';ctx.beginPath();ctx.arc(x+18,y+2,15,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';ctx.fillRect(x+4,y-8,28,9);ctx.fillRect(x+10,y-2,16,3);ctx.fillRect(x+12,y+18,4,4);ctx.fillRect(x+21,y+18,4,4);ctx.fillStyle='#8a3a2c';ctx.fillRect(x+12,y+25,12,2);
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-8,y-26,56,18);ctx.fillStyle='#fff6d6';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText('דודי',x+18,y-12);
+}
+
+function drawHud(now){
+  if(state!=='playing')return;
+  ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(20,18,380,144);ctx.strokeStyle='#ffd166';ctx.lineWidth=3;ctx.strokeRect(20,18,380,144);
+  ctx.fillStyle='#fff6d6';ctx.font='bold 24px Arial';ctx.textAlign='right';
+  ctx.fillText('לחיצות זריזות על רווח = ספרינט',378,44);ctx.fillText('חץ למעלה = קפיצה',378,72);
+  ctx.font='21px Arial';ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),378,104);ctx.fillText('דמות: '+player.name,378,132);ctx.fillText('זמן: '+formatTime(now-startTime),378,158);
+  drawProgressBar(400,34,560,24,player.x,enemy.x);drawDistanceBar(980,24,270,34);
+}
+
+function drawProgressBar(x,y,w,h,pX,eX){
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ffd166';ctx.lineWidth=3;ctx.strokeRect(x,y,w,h);
+  const start=260,end=finish.x,pT=Math.min(1,Math.max(0,(pX-start)/(end-start))),eT=Math.min(1,Math.max(0,(eX-start)/(end-start)));
+  ctx.fillStyle='#5eead4';ctx.fillRect(x+pT*w-6,y-4,12,h+8);ctx.fillStyle='#ff7b72';ctx.fillRect(x+eT*w-6,y-4,12,h+8);ctx.fillStyle='#fff';ctx.font='18px Arial';ctx.textAlign='center';ctx.fillText(player.name,x+pT*w,y+h+22);ctx.fillText(enemy.name,x+eT*w,y+h+22);
+}
+
+function drawDistanceBar(x,y,w,h){
+  ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ffd166';ctx.strokeRect(x,y,w,h);
+  const ratio=Math.min(1,Math.max(0,player.x/finish.x));ctx.fillStyle='#84fab0';ctx.fillRect(x+4,y+4,(w-8)*ratio,h-8);ctx.fillStyle='#fff';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.fillText('התקדמות בכביש 90',x+w/2,y+22);
+}
+
+function drawTitleOnCanvas(){
+  if(state==='cover'){
+    const a=.45+(Math.sin(blink*4)+1)*.25;
+    ctx.globalAlpha=a;
+    ctx.font='bold 64px Arial';
+    ctx.textAlign='center';
+    ctx.fillStyle='#d7fff7';
+    ctx.fillText('לחץ על מקש כלשהו כדי להתחיל',canvas.width/2,646);
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawCoverBackground(){
+  const sky=ctx.createLinearGradient(0,0,0,canvas.height);sky.addColorStop(0,'#1f2d5d');sky.addColorStop(.36,'#385b96');sky.addColorStop(.72,'#f09a4b');sky.addColorStop(1,'#f4d082');ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,canvas.height);
+  const drawDune=(x,baseY,w,h)=>{ctx.beginPath();ctx.moveTo(x-w/2,baseY);ctx.quadraticCurveTo(x,baseY-h,x+w/2,baseY);ctx.closePath();ctx.fill()};
+  ctx.fillStyle='#e2b56d';drawDune(200,370,260,90);drawDune(420,370,320,110);drawDune(650,370,240,80);drawDune(900,370,300,100);drawDune(1120,370,220,70);
+  ctx.fillStyle='#d6a85a';ctx.fillRect(0,370,canvas.width,350);ctx.fillStyle='#c79247';for(let i=0;i<canvas.width;i+=28)ctx.fillRect(i,560+((i/28)%2)*4,13,4);
+  ctx.fillStyle='#333842';ctx.beginPath();ctx.moveTo(250,720);ctx.bezierCurveTo(340,600,430,525,555,470);ctx.bezierCurveTo(670,420,785,408,920,418);ctx.bezierCurveTo(1060,430,1170,455,1280,500);ctx.lineTo(1280,720);ctx.closePath();ctx.fill();ctx.strokeStyle='#ffd54a';ctx.lineWidth=8;ctx.setLineDash([26,20]);ctx.beginPath();ctx.moveTo(760,720);ctx.bezierCurveTo(730,620,720,545,768,495);ctx.bezierCurveTo(835,445,958,438,1125,468);ctx.stroke();ctx.setLineDash([]);
+  const cc=(x,y,s=1)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#2c8e50';ctx.fillRect(-9,-56,18,62);ctx.fillRect(-24,-37,12,12);ctx.fillRect(12,-33,12,12);ctx.fillRect(-24,-58,10,22);ctx.fillRect(14,-56,10,22);ctx.restore()};
+  cc(140,430,1.05);cc(260,420,.9);cc(420,415,.8);cc(610,410,.9);cc(760,418,.85);cc(930,412,.9);cc(1120,425,1);
+  const fp=(x,y,s=.9)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#8b5a2b';ctx.fillRect(-3,-40,6,40);ctx.fillStyle='#2f8f4e';ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-20,-30);ctx.lineTo(-6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(20,-30);ctx.lineTo(6,-28);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(-16,-44);ctx.lineTo(-4,-36);ctx.fill();ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(16,-44);ctx.lineTo(4,-36);ctx.fill();ctx.restore()};
+  fp(350,418,.85);fp(540,408,.9);fp(720,402,.8);fp(980,410,.95);
+  const glow=ctx.createRadialGradient(canvas.width/2,118,20,canvas.width/2,118,220);glow.addColorStop(0,'rgba(255,223,120,.34)');glow.addColorStop(1,'rgba(255,223,120,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,canvas.width,280);
+  ctx.textAlign='center';ctx.lineWidth=8;ctx.strokeStyle='#5d2208';ctx.fillStyle='#ffe06e';ctx.font='bold 82px Arial';ctx.strokeText(TITLE,canvas.width/2,128);ctx.fillText(TITLE,canvas.width/2,128);
+}
 
 function drawMainCoverImage(){
   if(mainCoverImage.complete && mainCoverImage.naturalWidth > 0){
     ctx.drawImage(mainCoverImage, 0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
   } else {
     drawCoverBackground();
   }
@@ -112,8 +385,17 @@ function drawScene(now){
   ctx.restore();
 }
 
-function loop(ts){const now=ts||performance.now(),dt=Math.min(.033,(now-last)/1000||.016);last=now;if(state==='playing')updatePlaying(dt,now);else{shake*=Math.pow(.18,dt||.016);flash*=Math.pow(.07,dt||.016);blink+=dt||.016;updateDust(player.dust,dt||.016);updateDust(enemy.dust,dt||.016)}drawScene(now);requestAnimationFrame(loop)}
-showCover();requestAnimationFrame(loop)
+function loop(ts){
+  const now=ts||performance.now(),dt=Math.min(.033,(now-last)/1000||.016);
+  last=now;
+  if(state==='playing')updatePlaying(dt,now);
+  else{shake*=Math.pow(.18,dt||.016);flash*=Math.pow(.07,dt||.016);blink+=dt||.016;updateDust(player.dust,dt||.016);updateDust(enemy.dust,dt||.016)}
+  drawScene(now);
+  requestAnimationFrame(loop);
+}
+
+showCover();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
