@@ -40,7 +40,7 @@ canvas{
   align-items:center;
   justify-content:center;
   pointer-events:none;
-  padding:12px;
+  padding:8px;
   overflow:auto;
   overscroll-behavior:contain;
 }
@@ -182,10 +182,7 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
 #rotateWarning .small{font-size:clamp(16px,4vw,24px);color:#d3fff5}
 
 @media (max-width:700px){
-  #overlay{
-    align-items:flex-start;
-    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-  }
+  #overlay{align-items:center;padding:6px}
   .panel{
     width:100%;
     max-width:100%;
@@ -238,7 +235,7 @@ const hazanAvatar = new Image(); hazanAvatar.src = 'HAZAN.png';
 const revahAvatar = new Image(); revahAvatar.src = 'REVAH.png';
 
 const TITLE = 'כלא או גלידה';
-const STORAGE_KEY = 'kela_o_glida_scores_v8';
+const STORAGE_KEY = 'kela_o_glida_scores_v9';
 
 let state = 'cover';
 let selectedCharacter = 'r';
@@ -257,19 +254,22 @@ let altCheatTaps = [];
 let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
+let jumpSlowdown = 0;
 
 const player = {x:0,baseY:0,speed:0,mashBoost:0,anim:0,taps:[],cps:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'רווח',characterId:'r'};
 const enemy  = {x:0,baseY:0,speed:0,targetSpeed:0,anim:0,phase:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'חזן',characterId:'h'};
 const officer = {active:false,x:0,speed:0,escaped:false,passedPlayer:false};
 
 function getCanvasDisplaySize(){
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const a = 16/9;
-  let w = Math.floor(vw);
-  let h = Math.floor(w/a);
-  if(h > vh){ h = Math.floor(vh); w = Math.floor(h*a); }
-  return { w: Math.max(320,w), h: Math.max(180,h) };
+  const vw = window.innerWidth, vh = window.innerHeight, a = 16/9;
+  const mobilePad = isMobileLike() ? 10 : 0;
+  let w = Math.floor(vw - mobilePad*2);
+  let h = Math.floor(w / a);
+  if(h > vh - mobilePad*2){
+    h = Math.floor(vh - mobilePad*2);
+    w = Math.floor(h * a);
+  }
+  return {w:Math.max(320,w), h:Math.max(180,h)};
 }
 function resizeCanvas(){
   const {w,h} = getCanvasDisplaySize();
@@ -281,7 +281,7 @@ function resizeCanvas(){
 function metrics(){
   const W = canvas.width;
   const H = canvas.height;
-  const S = Math.min(W/1280,H/720);
+  const S = Math.min(W/1280, H/720);
   const roadY = H*0.66;
   const roadH = H*0.17;
   const worldLength = W*6.4;
@@ -347,7 +347,7 @@ function escapeHtml(t){
 }
 
 function showCover(){
-  state='cover';
+  state = 'cover';
   setOverlay('');
 }
 
@@ -488,7 +488,14 @@ function showResult(){
 }
 
 function resetRacer(r,x,y){
-  r.x=x; r.baseY=y; r.speed=0; r.anim=0; r.dust=[]; r.jumpY=0; r.jumpV=0; r.isJumping=false;
+  r.x=x;
+  r.baseY=y;
+  r.speed=0;
+  r.anim=0;
+  r.dust=[];
+  r.jumpY=0;
+  r.jumpV=0;
+  r.isJumping=false;
   if(r.taps){ r.taps=[]; r.cps=0; r.mashBoost=0; }
   if('phase' in r) r.phase=0;
   if('targetSpeed' in r) r.targetSpeed=0;
@@ -501,6 +508,8 @@ function startGame(){
   winner=null;
   scoreSaved=false;
   gameOverReason='';
+  jumpSlowdown=0;
+
   if(selectedCharacter==='r'){
     player.name='רווח'; player.characterId='r';
     enemy.name='חזן'; enemy.characterId='h';
@@ -508,12 +517,21 @@ function startGame(){
     player.name='חזן'; player.characterId='h';
     enemy.name='רווח'; enemy.characterId='r';
   }
+
   resetRacer(player,m.W*0.20,m.H*0.60);
   resetRacer(enemy,m.W*0.17,m.H*0.72);
+
   startTime=performance.now();
   finishTime=0;
-  blink=0; flash=0; shake=0; cameraX=0; countdown=1.2;
-  officer.active=false; officer.escaped=false; officer.passedPlayer=false;
+  blink=0;
+  flash=0;
+  shake=0;
+  cameraX=0;
+  countdown=1.2;
+
+  officer.active=false;
+  officer.escaped=false;
+  officer.passedPlayer=false;
   spawnOfficer(true);
 }
 function spawnOfficer(initial=false){
@@ -525,13 +543,62 @@ function spawnOfficer(initial=false){
   officer.x=player.x+buffer+m.W*(0.42+Math.random()*0.18);
   officer.speed=10+Math.random()*2.5;
 }
+
+function spawnDust(r){
+  const m=metrics();
+  const unit=m.S;
+  const xOffset=18*unit;
+  const yOffset=42*unit;
+  for(let i=0;i<4;i++){
+    r.dust.push({
+      x:r.x+xOffset+Math.random()*(16*unit),
+      y:r.baseY+r.jumpY+yOffset+Math.random()*(8*unit),
+      vx:(-1-Math.random()*2)*unit,
+      vy:(-0.2-Math.random()*0.8)*unit,
+      life:0.6+Math.random()*0.4,
+      size:(4+Math.random()*6)*unit
+    });
+  }
+}
+function spawnJumpDust(r){
+  const m=metrics();
+  const unit=m.S;
+  for(let i=0;i<8;i++){
+    r.dust.push({
+      x:r.x + 10*unit + Math.random()*(24*unit),
+      y:r.baseY + r.jumpY + 44*unit + Math.random()*(6*unit),
+      vx:(-2 + Math.random()*4)*unit,
+      vy:(-1.4 - Math.random()*1.2)*unit,
+      life:0.35 + Math.random()*0.25,
+      size:(3 + Math.random()*5)*unit
+    });
+  }
+}
+function spawnLandingDust(r){
+  const m=metrics();
+  const unit=m.S;
+  for(let i=0;i<12;i++){
+    const dir=i<6 ? -1 : 1;
+    r.dust.push({
+      x:r.x + 18*unit + Math.random()*(12*unit),
+      y:r.baseY + 46*unit + Math.random()*(6*unit),
+      vx:(dir*(1.2 + Math.random()*2.4))*unit,
+      vy:(-0.6 - Math.random()*0.9)*unit,
+      life:0.45 + Math.random()*0.3,
+      size:(4 + Math.random()*6)*unit
+    });
+  }
+}
+
 function doJump(r){
   if(r.isJumping) return;
+  const mobilePlayerJump = (r===player && isMobileLike()) ? 0.78 : 1;
   r.isJumping=true;
-  r.jumpV=-15.5*Math.min(1.25,Math.max(0.8,canvas.height/720));
+  r.jumpV=-15.5 * mobilePlayerJump * Math.min(1.25,Math.max(0.8,canvas.height/720));
   r.anim+=1.2;
   shake=Math.min(10,shake+1.5);
   flash=Math.max(flash,0.08);
+  spawnJumpDust(r);
 }
 function doSprintTap(){
   if(state!=='playing') return;
@@ -597,22 +664,6 @@ canvas.addEventListener('touchend',e=>{
   e.preventDefault();
 },{passive:false});
 
-function spawnDust(r){
-  const m=metrics();
-  const unit=m.S;
-  const xOffset=18*unit;
-  const yOffset=42*unit;
-  for(let i=0;i<4;i++){
-    r.dust.push({
-      x:r.x+xOffset+Math.random()*(16*unit),
-      y:r.baseY+r.jumpY+yOffset+Math.random()*(8*unit),
-      vx:(-1-Math.random()*2)*unit,
-      vy:(-0.2-Math.random()*0.8)*unit,
-      life:0.6+Math.random()*0.4,
-      size:(4+Math.random()*6)*unit
-    });
-  }
-}
 function updateDust(list,dt){
   for(let i=list.length-1;i>=0;i--){
     const p=list[i];
@@ -631,6 +682,10 @@ function updateJump(r,dt){
     r.jumpY=0;
     r.jumpV=0;
     r.isJumping=false;
+    spawnLandingDust(r);
+    if(r===player){
+      jumpSlowdown=0.16;
+    }
   }
 }
 function triggerGameOver(){
@@ -658,11 +713,14 @@ function updateOfficer(dt){
 function updatePlaying(dt,now){
   const m=metrics();
   if(countdown>0) countdown-=dt;
+
   player.taps=player.taps.filter(t=>now-t<=1000);
   player.cps=player.taps.length;
   player.mashBoost*=Math.pow(0.62,dt);
   player.speed*=Math.pow(0.55,dt);
-  const pv=1.3+player.speed+player.mashBoost;
+
+  const slowdownFactor = jumpSlowdown > 0 ? (isMobileLike() ? 0.72 : 0.84) : 1;
+  const pv=(1.3+player.speed+player.mashBoost)*slowdownFactor;
   player.x+=pv*60*dt*0.18*(m.W/1280);
   player.anim+=pv*dt*0.72;
 
@@ -688,6 +746,10 @@ function updatePlaying(dt,now){
   shake*=Math.pow(0.18,dt);
   flash*=Math.pow(0.07,dt);
   blink+=dt;
+
+  if(jumpSlowdown>0){
+    jumpSlowdown=Math.max(0,jumpSlowdown-dt);
+  }
 
   if(player.x>=m.finishX){
     winner='player';
@@ -749,7 +811,6 @@ function drawGround(){
   for(let i=0;i<m.worldLength+800;i+=Math.max(18,m.W*0.018)){
     ctx.fillRect(i,m.H*0.72+((i/24)%2)*4,Math.max(8,m.W*0.008),Math.max(3,m.H*0.004));
   }
-
   ctx.fillStyle='#454a52';
   ctx.fillRect(0,m.roadY,m.worldLength,m.roadH);
 
@@ -795,6 +856,7 @@ function drawRunner(r){
   const y=r.baseY+r.jumpY+bob;
   const frame=Math.floor(r.anim*10)%4;
   if(x<-80||x>m.W+80) return;
+
   drawDust(r.dust);
 
   const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r';
@@ -839,6 +901,7 @@ function drawRunner(r){
   ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit);
   ctx.fillStyle='#8a3a2c';
   ctx.fillRect(x+14*unit,y+24*unit,8*unit,2*unit);
+
   if(beard){
     ctx.fillStyle='#1b1b1b';
     ctx.fillRect(x+10*unit,y+23*unit,16*unit,8*unit);
@@ -903,20 +966,24 @@ function drawOfficer(){
 function drawHud(now){
   if(state!=='playing') return;
   const l=layout(), m=metrics();
+
   ctx.fillStyle='rgba(0,0,0,.45)';
   ctx.fillRect(l.hudX,l.hudY,l.hudW,l.hudH);
   ctx.strokeStyle='#ffd166';
   ctx.lineWidth=Math.max(2,m.W*0.0025);
   ctx.strokeRect(l.hudX,l.hudY,l.hudW,l.hudH);
+
   ctx.fillStyle='#fff6d6';
   ctx.font='bold '+l.hudTitleFont+'px Arial';
   ctx.textAlign='right';
-  ctx.fillText('ספרינט: הקשה מהירה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8);
-  ctx.fillText('קפיצה: החלקה למעלה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18);
+  ctx.fillText('ספרינט: רווח או נגיעה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8);
+  ctx.fillText('קפיצה: חץ או החלקה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18);
+
   ctx.font=l.hudBodyFont+'px Arial';
   ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),l.hudX+l.hudW-14,l.hudY+l.hudH-44);
   ctx.fillText('דמות: '+player.name,l.hudX+l.hudW-14,l.hudY+l.hudH-24);
   ctx.fillText('זמן: '+formatTime(now-startTime),l.hudX+l.hudW-14,l.hudY+l.hudH-4);
+
   drawProgressBar(l.progressX,l.progressY,l.progressW,l.progressH,player.x,enemy.x);
   drawDistanceBar(l.distanceX,l.distanceY,l.distanceW,l.distanceH);
 
@@ -932,6 +999,7 @@ function drawHud(now){
     ctx.fillText('תזמון לא נכון = גיים אובר',x+boxW/2,y+boxH*0.68);
   }
 }
+
 function drawProgressBar(x,y,w,h,pX,eX){
   const m=metrics();
   ctx.fillStyle='rgba(0,0,0,.4)';
@@ -939,9 +1007,12 @@ function drawProgressBar(x,y,w,h,pX,eX){
   ctx.strokeStyle='#ffd166';
   ctx.lineWidth=Math.max(2,m.W*0.0025);
   ctx.strokeRect(x,y,w,h);
-  const start=m.W*0.20, end=m.finishX;
+
+  const start=m.W*0.20;
+  const end=m.finishX;
   const pT=Math.min(1,Math.max(0,(pX-start)/(end-start)));
   const eT=Math.min(1,Math.max(0,(eX-start)/(end-start)));
+
   ctx.fillStyle='#5eead4';
   ctx.fillRect(x+pT*w-6,y-4,12,h+8);
   ctx.fillStyle='#ff7b72';
@@ -966,15 +1037,16 @@ function drawDistanceBar(x,y,w,h){
   ctx.textAlign='center';
   ctx.fillText('התקדמות בכביש 90',x+w/2,y+h*0.66);
 }
+
 function drawTitleOnCanvas(){
   if(state==='cover'){
     const {W,H}=metrics();
     const a=0.45+(Math.sin(blink*4)+1)*0.25;
     ctx.globalAlpha=a;
-    ctx.font='bold '+Math.max(28,W*0.03)+'px Arial';
+    ctx.font='bold '+Math.max(24,W*0.026)+'px Arial';
     ctx.textAlign='center';
     ctx.fillStyle='#d7fff7';
-    ctx.fillText('לחץ על מקש כלשהו כדי להתחיל',W/2,H*0.91);
+    ctx.fillText('לחץ על מקש כלשהו כדי להתחיל',W/2,H*0.84);
     ctx.globalAlpha=1;
   }
 }
@@ -1066,7 +1138,7 @@ function drawMainCoverImage(){
     ctx.drawImage(coverImage,0,0,W,H);
     ctx.fillStyle='rgba(0,0,0,0.18)';
     ctx.fillRect(0,0,W,H);
-  }else{
+  } else {
     drawCoverBackground();
   }
 }
@@ -1100,7 +1172,9 @@ function drawScene(now){
 
 function tryLockLandscape(){
   try{
-    if(screen.orientation&&screen.orientation.lock&&isMobileLike()) screen.orientation.lock('landscape');
+    if(screen.orientation&&screen.orientation.lock&&isMobileLike()){
+      screen.orientation.lock('landscape');
+    }
   }catch(e){}
 }
 
