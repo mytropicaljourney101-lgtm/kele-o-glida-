@@ -420,7 +420,7 @@ function showMenu(){
   setOverlay(
     '<div class="panel">'+
       '<div class="title">'+TITLE+'</div>'+
-      '<p class="subtitle">בחר דמות, רוץ עם רווח או נגיעה, וקפוץ עם החץ למעלה או החלקה למעלה</p>'+
+      '<p class="subtitle">בחר דמות, הקש בזריזות לריצה, החלק למעלה לקפיצה</p>'+
       '<div class="character-select">'+
         '<div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div>'+
         '<div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div>'+
@@ -464,7 +464,7 @@ function showResult(){
     '<div class="panel">'+
       '<div class="title" style="font-size:clamp(32px,6vw,60px)">'+(won?'🍦 גלידה!':'🚔 גיים אובר')+'</div>'+
       '<p class="subtitle" style="font-size:clamp(18px,3vw,28px)">'+(won?'סיימת את המדס ולא נפלת על דודי. כל השאר זה בונוס!':gameOverReason)+'</p>'+
-      '<p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'קפוץ עם החץ למעלה או החלק למעלה כדי להימנע מדודי')+'</p>'+
+      '<p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'תשתדל להימנע מהזין הזה')+'</p>'+
       (won?'<input id="nameInput" class="name-input" maxlength="14" placeholder="כתוב שם ללוח התוצאות" />':'')+
       '<div class="menu-buttons">'+
         (won?'<button id="saveBtn" type="button">שמור תוצאה</button>':'')+
@@ -976,8 +976,8 @@ function drawHud(now){
   ctx.fillStyle='#fff6d6';
   ctx.font='bold '+l.hudTitleFont+'px Arial';
   ctx.textAlign='right';
-  ctx.fillText('ספרינט: רווח או נגיעה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8);
-  ctx.fillText('קפיצה: חץ או החלקה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18);
+  ctx.fillText('ספרינט: הקשה זריזה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8);
+  ctx.fillText('קפיצה: החלקה למעלה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18);
 
   ctx.font=l.hudBodyFont+'px Arial';
   ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),l.hudX+l.hudW-14,l.hudY+l.hudH-44);
