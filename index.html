@@ -44,13 +44,28 @@ canvas{
   overflow:auto;
   overscroll-behavior:contain;
 }
+#scrollHint{
+  position:fixed;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  z-index:10000;
+  display:none;
+  pointer-events:none;
+  background:rgba(0,0,0,.72);
+  color:#fff6d6;
+  border:2px solid #ffd166;
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  box-shadow:0 8px 18px rgba(0,0,0,.28);
+}
 #overlay::-webkit-scrollbar{width:0;height:0}
-
 .panel{
   pointer-events:auto;
   width:min(92vw, 760px);
   max-width:92vw;
-  max-height:calc(100vh - 24px - env(safe-area-inset-bottom));
+  max-height:calc(100vh - 24px);
   overflow:auto;
   background:var(--panel);
   border:4px solid var(--border);
@@ -61,17 +76,9 @@ canvas{
   box-shadow:0 18px 40px rgba(0,0,0,.35);
 }
 .panel::-webkit-scrollbar{width:0;height:0}
-
 .title{font-size:clamp(34px, 6vw, 68px);font-weight:700;text-shadow:0 4px 0 #5f2d00}
 .subtitle{font-size:clamp(16px, 2.3vw, 24px);color:#d3fff5;margin-top:10px;line-height:1.35}
-
-.menu-buttons{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:center;
-  margin-top:18px;
-}
+.menu-buttons{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:18px}
 button{
   border:0;
   border-radius:16px;
@@ -86,14 +93,7 @@ button{
   box-shadow:0 6px 0 #935600;
 }
 button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0 6px 0 #0d6988}
-
-.character-select{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:14px;
-  margin:18px 0 10px;
-  align-items:start;
-}
+.character-select{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0 10px;align-items:start}
 .character-card{
   border:3px solid rgba(255,255,255,.16);
   border-radius:18px;
@@ -112,7 +112,6 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
   background:#1c2030;
 }
 .character-name{font-size:clamp(22px, 3vw, 28px);font-weight:bold}
-
 .score-list{
   margin:18px auto 22px;
   width:min(100%, 560px);
@@ -131,7 +130,6 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
   font-size:clamp(16px, 2vw, 20px);
 }
 .score-row:last-child{border-bottom:0}
-
 .name-input{
   margin:18px 0;
   width:min(100%, 350px);
@@ -141,24 +139,6 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
   border:2px solid #ffd166;
   text-align:center;
 }
-
-#scrollHint{
-  position:fixed;
-  left:50%;
-  bottom:10px;
-  transform:translateX(-50%);
-  z-index:10000;
-  display:none;
-  pointer-events:none;
-  background:rgba(0,0,0,.72);
-  color:#fff6d6;
-  border:2px solid #ffd166;
-  border-radius:999px;
-  padding:8px 14px;
-  font-size:14px;
-  box-shadow:0 8px 18px rgba(0,0,0,.28);
-}
-
 #rotateWarning{
   position:fixed;
   inset:0;
@@ -180,16 +160,9 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
 }
 #rotateWarning .big{font-size:clamp(30px,7vw,60px);font-weight:bold;margin-bottom:12px}
 #rotateWarning .small{font-size:clamp(16px,4vw,24px);color:#d3fff5}
-
 @media (max-width:700px){
   #overlay{align-items:center;padding:6px}
-  .panel{
-    width:100%;
-    max-width:100%;
-    max-height:calc(100vh - 20px - env(safe-area-inset-bottom));
-    padding:16px 14px 20px;
-    border-radius:18px;
-  }
+  .panel{width:100%;max-width:100%;max-height:calc(100vh - 20px);padding:16px 14px 20px;border-radius:18px}
   .title{font-size:clamp(28px, 8vw, 42px)}
   .subtitle{font-size:clamp(14px, 4vw, 18px);line-height:1.45}
   .character-select{grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 8px}
@@ -213,272 +186,244 @@ button.secondary{background:linear-gradient(180deg,#b8fff5,#59d6ff);box-shadow:0
   <canvas id="game"></canvas>
   <div id="overlay"></div>
 </div>
-
 <div id="scrollHint">גלול למטה</div>
-
 <div id="rotateWarning">
   <div class="box">
     <div class="big">סובב את הטלפון לרוחב כדי לשחק</div>
     <div class="small">המשחק מותאם למסך אופקי</div>
   </div>
 </div>
-
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const overlay = document.getElementById('overlay');
-const rotateWarning = document.getElementById('rotateWarning');
-const scrollHint = document.getElementById('scrollHint');
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const overlay=document.getElementById('overlay');
+const rotateWarning=document.getElementById('rotateWarning');
+const scrollHint=document.getElementById('scrollHint');
 
-const coverImage = new Image(); coverImage.src = 'Image.png';
-const hazanAvatar = new Image(); hazanAvatar.src = 'HAZAN.png';
-const revahAvatar = new Image(); revahAvatar.src = 'REVAH.png';
+const coverImage=new Image(); coverImage.src='Image.png';
+const hazanAvatar=new Image(); hazanAvatar.src='HAZAN.png';
+const revahAvatar=new Image(); revahAvatar.src='REVAH.png';
 
-const TITLE = 'כלא או גלידה';
-const STORAGE_KEY = 'kela_o_glida_scores_v9';
+const TITLE='כלא או גלידה';
+const STORAGE_KEY='kela_o_glida_scores_v7';
+let state='cover',selectedCharacter='r',winner=null,scoreSaved=false,startTime=0,finishTime=0,blink=0,flash=0,shake=0,cameraX=0,countdown=0,lastTime=0,gameOverReason='';
+let altCheatTaps=[],touchStartX=0,touchStartY=0,touchStartTime=0;
+let audioCtx=null,audioUnlocked=false;
 
-let state = 'cover';
-let selectedCharacter = 'r';
-let winner = null;
-let scoreSaved = false;
-let startTime = 0;
-let finishTime = 0;
-let blink = 0;
-let flash = 0;
-let shake = 0;
-let cameraX = 0;
-let countdown = 0;
-let lastTime = 0;
-let gameOverReason = '';
-let altCheatTaps = [];
-let touchStartX = 0;
-let touchStartY = 0;
-let touchStartTime = 0;
-let jumpSlowdown = 0;
-
-const player = {x:0,baseY:0,speed:0,mashBoost:0,anim:0,taps:[],cps:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'רווח',characterId:'r'};
-const enemy  = {x:0,baseY:0,speed:0,targetSpeed:0,anim:0,phase:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'חזן',characterId:'h'};
-const officer = {active:false,x:0,speed:0,escaped:false,passedPlayer:false};
+const player={x:0,baseY:0,speed:0,mashBoost:0,anim:0,taps:[],cps:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'רווח',characterId:'r'};
+const enemy ={x:0,baseY:0,speed:0,targetSpeed:0,anim:0,phase:0,dust:[],jumpY:0,jumpV:0,isJumping:false,name:'חזן',characterId:'h'};
+const officer={active:false,x:0,speed:0,escaped:false,passedPlayer:false};
 
 function getCanvasDisplaySize(){
-  const vw = window.innerWidth, vh = window.innerHeight, a = 16/9;
+  const vw=window.innerWidth, vh=window.innerHeight, a=16/9;
   const mobilePad = isMobileLike() ? 10 : 0;
-  let w = Math.floor(vw - mobilePad*2);
-  let h = Math.floor(w / a);
-  if(h > vh - mobilePad*2){
-    h = Math.floor(vh - mobilePad*2);
-    w = Math.floor(h * a);
-  }
+  let w=Math.floor(vw - mobilePad*2), h=Math.floor(w/a);
+  if(h>vh-mobilePad*2){ h=Math.floor(vh-mobilePad*2); w=Math.floor(h*a); }
   return {w:Math.max(320,w), h:Math.max(180,h)};
 }
 function resizeCanvas(){
-  const {w,h} = getCanvasDisplaySize();
-  canvas.width = w;
-  canvas.height = h;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
+  const {w,h}=getCanvasDisplaySize();
+  canvas.width=w; canvas.height=h;
+  canvas.style.width=w+'px'; canvas.style.height=h+'px';
 }
 function metrics(){
-  const W = canvas.width;
-  const H = canvas.height;
-  const S = Math.min(W/1280, H/720);
-  const roadY = H*0.66;
-  const roadH = H*0.17;
-  const worldLength = W*6.4;
-  const finishX = worldLength - W*0.22;
+  const W=canvas.width, H=canvas.height, S=Math.min(W/1280,H/720), roadY=H*0.66, roadH=H*0.17, worldLength=W*6.4, finishX=worldLength-W*0.22;
   return {W,H,S,roadY,roadH,worldLength,finishX};
 }
 function layout(){
-  const {W,H} = metrics();
+  const {W,H}=metrics();
   return {
-    hudX:W*0.02,
-    hudY:H*0.02,
-    hudW:Math.min(W*0.34,430),
-    hudH:H*0.24,
-    progressX:W*0.38,
-    progressY:H*0.05,
-    progressW:W*0.37,
-    progressH:Math.max(18,H*0.03),
-    distanceX:W*0.77,
-    distanceY:H*0.035,
-    distanceW:W*0.20,
-    distanceH:Math.max(28,H*0.05),
-    hudTitleFont:Math.max(14,W*0.018),
-    hudBodyFont:Math.max(12,W*0.016)
+    hudX:W*0.02,hudY:H*0.02,hudW:Math.min(W*0.34,430),hudH:H*0.24,
+    progressX:W*0.38,progressY:H*0.05,progressW:W*0.37,progressH:Math.max(18,H*0.03),
+    distanceX:W*0.77,distanceY:H*0.035,distanceW:W*0.20,distanceH:Math.max(28,H*0.05),
+    hudTitleFont:Math.max(14,W*0.018), hudBodyFont:Math.max(12,W*0.016)
   };
 }
-function isMobileLike(){
-  return window.matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-function isNarrowMobile(){
-  return isMobileLike();
-}
-function shouldShowRotateWarning(){
-  return isMobileLike() && window.innerHeight > window.innerWidth;
-}
-function updateRotateWarning(){
-  rotateWarning.style.display = shouldShowRotateWarning() ? 'flex' : 'none';
-}
+function isMobileLike(){ return window.matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+function isNarrowMobile(){ return isMobileLike() && window.innerWidth <= 700; }
+function shouldShowRotateWarning(){ return isMobileLike() && window.innerHeight>window.innerWidth; }
+function updateRotateWarning(){ rotateWarning.style.display=shouldShowRotateWarning()?'flex':'none'; }
 function updateScrollHint(){
   const canScroll = overlay.scrollHeight > overlay.clientHeight + 4;
   const nearBottom = overlay.scrollTop + overlay.clientHeight >= overlay.scrollHeight - 8;
-  const shouldShow = !shouldShowRotateWarning() && canScroll && !nearBottom && state!=='playing' && state!=='cover';
+  const shouldShow = !shouldShowRotateWarning() && canScroll && !nearBottom && state !== 'playing' && state !== 'cover';
   scrollHint.style.display = shouldShow ? 'block' : 'none';
 }
 function setOverlay(html){
   const prevScroll = overlay.scrollTop;
-  overlay.innerHTML = html;
+  overlay.innerHTML=html;
   requestAnimationFrame(()=>{
-    if(state==='menu' && isNarrowMobile()) overlay.scrollTop = prevScroll;
-    else overlay.scrollTop = 0;
+    if(state==='menu' && isNarrowMobile()){
+      overlay.scrollTop = prevScroll;
+    } else {
+      overlay.scrollTop = 0;
+    }
     updateScrollHint();
   });
 }
-function formatTime(ms){ return (ms/1000).toFixed(2) + ' שניות'; }
+function formatTime(ms){ return (ms/1000).toFixed(2)+' שניות'; }
 function getScores(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch{return[];} }
-function saveScore(name,timeMs){
-  const s = getScores();
-  s.push({name:name||'שחקן',timeMs});
-  s.sort((a,b)=>a.timeMs-b.timeMs);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s.slice(0,10)));
+function saveScore(name,timeMs){ const s=getScores(); s.push({name:name||'שחקן',timeMs}); s.sort((a,b)=>a.timeMs-b.timeMs); localStorage.setItem(STORAGE_KEY,JSON.stringify(s.slice(0,10))); }
+function escapeHtml(t){ return t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function ensureAudio(){
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(AC) audioCtx = new AC();
+  }
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  audioUnlocked = !!audioCtx;
 }
-function escapeHtml(t){
-  return t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function playTone(freq=440,duration=0.08,type='sine',volume=0.04,slideTo=null){
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, now);
+  if(slideTo){
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), now + duration);
+  }
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+function playNoise(duration=0.08, volume=0.03, hp=300){
+  if(!audioCtx) return;
+  const buffer = audioCtx.createBuffer(1, Math.max(1, Math.floor(audioCtx.sampleRate * duration)), audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++){
+    data[i] = (Math.random()*2-1) * (1 - i/data.length);
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = hp;
+  const gain = audioCtx.createGain();
+  const now = audioCtx.currentTime;
+  gain.gain.setValueAtTime(volume, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(now);
+  src.stop(now + duration + 0.02);
+}
+function playButtonSound(){
+  ensureAudio();
+  playTone(700, 0.05, 'square', 0.03, 520);
+  setTimeout(()=>playTone(520, 0.05, 'square', 0.025, 660), 28);
+}
+function playCharacterScrollSound(){
+  ensureAudio();
+  playTone(460, 0.07, 'triangle', 0.03, 620);
+}
+function playJumpSound(){
+  ensureAudio();
+  playTone(300, 0.12, 'square', 0.035, 620);
+  playNoise(0.04, 0.01, 500);
+}
+function playLandingSound(){
+  ensureAudio();
+  playNoise(0.08, 0.028, 220);
+  playTone(180, 0.07, 'triangle', 0.02, 120);
 }
 
-function showCover(){
-  state = 'cover';
-  setOverlay('');
-}
-
+function showCover(){ state='cover'; setOverlay(''); }
 function drawFallbackAvatar(g,charId){
   const x=66,y=48,skin='#f1c27d',uniform='#738c3a',uniformDark='#4c6124',hair='#171717';
-  g.fillStyle=uniform; g.fillRect(x-28,y+24,56,72);
-  g.fillStyle=uniformDark; g.fillRect(x-28,y+76,56,16);
-  g.fillStyle='#222a30'; g.fillRect(x-4,y+24,8,72);
-  g.fillStyle=skin; g.fillRect(x-8,y+10,16,16);
-  g.beginPath(); g.arc(x,y,30,0,Math.PI*2); g.fill();
+  g.fillStyle=uniform; g.fillRect(x-28,y+24,56,72); g.fillStyle=uniformDark; g.fillRect(x-28,y+76,56,16); g.fillStyle='#222a30'; g.fillRect(x-4,y+24,8,72);
+  g.fillStyle=skin; g.fillRect(x-8,y+10,16,16); g.beginPath(); g.arc(x,y,30,0,Math.PI*2); g.fill();
   g.fillStyle=hair; g.beginPath(); g.arc(x,y-4,31,Math.PI,Math.PI*2); g.fill(); g.fillRect(x-24,y-4,48,9);
   g.fillStyle='#111'; g.fillRect(x-13,y+2,5,5); g.fillRect(x+8,y+2,5,5); g.fillRect(x-15,y-6,10,3); g.fillRect(x+5,y-6,10,3);
   g.fillStyle='#8a3a2c'; g.fillRect(x-6,y+15,12,2);
   if(charId==='r'){ g.fillStyle='#181818'; g.fillRect(x-16,y+14,32,10); g.fillRect(x-12,y+24,24,8); }
-  else { g.fillStyle='#252525'; g.fillRect(x-10,y+15,20,6); }
+  else{ g.fillStyle='#252525'; g.fillRect(x-10,y+15,20,6); }
 }
 function drawAvatarInElement(id,charId){
-  const host=document.getElementById(id);
-  if(!host) return;
+  const host=document.getElementById(id); if(!host) return;
   host.innerHTML='<canvas width="132" height="132" style="width:100%;height:100%;display:block"></canvas>';
-  const c=host.querySelector('canvas');
-  const g=c.getContext('2d');
-  const img=charId==='h' ? hazanAvatar : revahAvatar;
-  if(img.complete && img.naturalWidth>0) g.drawImage(img,0,0,c.width,c.height);
-  else drawFallbackAvatar(g,charId);
+  const c=host.querySelector('canvas'), g=c.getContext('2d'), img=charId==='h'?hazanAvatar:revahAvatar;
+  if(img.complete&&img.naturalWidth>0) g.drawImage(img,0,0,c.width,c.height); else drawFallbackAvatar(g,charId);
 }
-
 function showMenu(){
   state='menu';
 
   if(isNarrowMobile()){
     const currentName = selectedCharacter==='h' ? 'חזן' : 'רווח';
-
     setOverlay(
-      '<div class="panel" style="width:min(94vw,520px);max-width:94vw;max-height:none;overflow:hidden;padding:10px 12px 12px;border-radius:16px">'+
-        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 8px">'+
-          '<button id="prevCharBtn" type="button" class="secondary" style="width:42px;min-width:42px;min-height:38px;padding:4px 0;font-size:18px">◀</button>'+
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:120px">'+
-            '<div style="width:78px;height:78px;border:3px solid rgba(255,255,255,.2);border-radius:14px;overflow:hidden;background:#1c2030" id="mobile-avatar"></div>'+
-            '<div style="margin-top:6px;font-size:22px;font-weight:bold">'+currentName+'</div>'+
-          '</div>'+
-          '<button id="nextCharBtn" type="button" class="secondary" style="width:42px;min-width:42px;min-height:38px;padding:4px 0;font-size:18px">▶</button>'+
+      '<div class="panel" style="width:min(94vw,380px);max-height:min(92vh,560px);padding:14px 12px 16px;overflow:hidden">'+
+        '<div class="title" style="font-size:clamp(26px,8vw,38px);margin-bottom:4px">'+TITLE+'</div>'+
+        '<div style="margin:8px auto 6px;width:min(112px,28vw);height:min(112px,28vw);border:3px solid rgba(255,255,255,.2);border-radius:18px;overflow:hidden;background:#1c2030" id="mobile-avatar"></div>'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0 2px">'+
+          '<button id="prevCharBtn" type="button" class="secondary" style="width:54px;min-height:44px;padding:8px 0">◀</button>'+
+          '<div style="min-width:96px;font-size:clamp(20px,5.6vw,26px);font-weight:bold">'+currentName+'</div>'+
+          '<button id="nextCharBtn" type="button" class="secondary" style="width:54px;min-height:44px;padding:8px 0">▶</button>'+
         '</div>'+
-        '<div style="display:flex;gap:8px;margin-top:6px">'+
-          '<button id="startBtn" type="button" style="flex:1;min-height:42px;padding:8px 10px;font-size:15px">התחל משחק</button>'+
-          '<button id="scoresBtn" type="button" class="secondary" style="flex:1;min-height:42px;padding:8px 10px;font-size:15px">לוח תוצאות</button>'+
+        '<p class="subtitle" style="font-size:clamp(12px,3.5vw,15px);margin:4px 0 10px;line-height:1.3">נגיעה = ספרינט · החלקה למעלה = קפיצה</p>'+
+        '<div class="menu-buttons" style="margin-top:8px;gap:8px">'+
+          '<button id="startBtn" type="button" style="width:100%;font-size:clamp(20px,5vw,24px);min-height:52px;padding:10px 12px">התחל משחק</button>'+
+          '<button id="scoresBtn" type="button" class="secondary" style="width:100%;min-height:48px;padding:10px 12px">לוח תוצאות</button>'+
         '</div>'+
       '</div>'
     );
 
     drawAvatarInElement('mobile-avatar', selectedCharacter);
-
-    document.getElementById('prevCharBtn').onclick=()=>{
-      const keepScroll = overlay.scrollTop;
+    document.getElementById('prevCharBtn').onclick = () => {
+      const keepScroll=overlay.scrollTop;
+      playCharacterScrollSound();
       selectedCharacter = selectedCharacter==='h' ? 'r' : 'h';
       showMenu();
-      requestAnimationFrame(()=>{ overlay.scrollTop = keepScroll; updateScrollHint(); });
+      requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); });
     };
-    document.getElementById('nextCharBtn').onclick=()=>{
-      const keepScroll = overlay.scrollTop;
+    document.getElementById('nextCharBtn').onclick = () => {
+      const keepScroll=overlay.scrollTop;
+      playCharacterScrollSound();
       selectedCharacter = selectedCharacter==='h' ? 'r' : 'h';
       showMenu();
-      requestAnimationFrame(()=>{ overlay.scrollTop = keepScroll; updateScrollHint(); });
+      requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); });
     };
-    document.getElementById('startBtn').onclick=()=>startGame();
-    document.getElementById('scoresBtn').onclick=()=>showScoreboard();
+    document.getElementById('startBtn').onclick = () => { playButtonSound(); startGame(); };
+    document.getElementById('scoresBtn').onclick = () => { playButtonSound(); showScoreboard(); };
     return;
   }
 
-  setOverlay(
-    '<div class="panel">'+
-      '<div class="title">'+TITLE+'</div>'+
-      '<p class="subtitle">בחר דמות, רוץ עם רווח או נגיעה, וקפוץ עם החץ למעלה או החלקה למעלה</p>'+
-      '<div class="character-select">'+
-        '<div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div>'+
-        '<div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div>'+
-      '</div>'+
-      '<div class="menu-buttons">'+
-        '<button id="startBtn" type="button">התחל משחק</button>'+
-        '<button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button>'+
-      '</div>'+
-    '</div>'
-  );
-
+  setOverlay('<div class="panel"><div class="title">'+TITLE+'</div><p class="subtitle">בחר דמות, רוץ עם רווח או נגיעה, וקפוץ עם החץ למעלה או החלקה למעלה</p><div class="character-select"><div class="character-card '+(selectedCharacter==='h'?'selected':'')+'" data-char="h"><div class="character-avatar" id="avatar-h"></div><div class="character-name">חזן</div></div><div class="character-card '+(selectedCharacter==='r'?'selected':'')+'" data-char="r"><div class="character-avatar" id="avatar-r"></div><div class="character-name">רווח</div></div></div><div class="menu-buttons"><button id="startBtn" type="button">התחל משחק</button><button id="scoresBtn" type="button" class="secondary">לוח תוצאות</button></div></div>');
   drawAvatarInElement('avatar-h','h');
   drawAvatarInElement('avatar-r','r');
-
-  document.querySelectorAll('.character-card').forEach(card=>{
-    card.onclick=()=>{
-      const keepScroll = overlay.scrollTop;
-      selectedCharacter = card.dataset.char;
-      showMenu();
-      requestAnimationFrame(()=>{ overlay.scrollTop = keepScroll; updateScrollHint(); });
-    };
+  document.querySelectorAll('.character-card').forEach(card=>card.onclick=()=>{
+    const keepScroll=overlay.scrollTop;
+    playCharacterScrollSound();
+    selectedCharacter=card.dataset.char;
+    showMenu();
+    requestAnimationFrame(()=>{ overlay.scrollTop=keepScroll; updateScrollHint(); });
   });
-  document.getElementById('startBtn').onclick=()=>startGame();
-  document.getElementById('scoresBtn').onclick=()=>showScoreboard();
+  document.getElementById('startBtn').onclick=()=>{ playButtonSound(); startGame(); };
+  document.getElementById('scoresBtn').onclick=()=>{ playButtonSound(); showScoreboard(); };
 }
-
 function showScoreboard(){
   state='scoreboard';
   const scores=getScores();
-  const rows=scores.length
-    ? scores.map((s,i)=>'<div class="score-row"><span>'+(i+1)+'. '+escapeHtml(s.name)+'</span><span>'+formatTime(s.timeMs)+'</span></div>').join('')
-    : '<div class="score-row"><span>עדיין אין תוצאות</span><span>—</span></div>';
+  const rows=scores.length ? scores.map((s,i)=>'<div class="score-row"><span>'+(i+1)+'. '+escapeHtml(s.name)+'</span><span>'+formatTime(s.timeMs)+'</span></div>').join('') : '<div class="score-row"><span>עדיין אין תוצאות</span><span>—</span></div>';
   setOverlay('<div class="panel"><div class="title">לוח תוצאות</div><div class="score-list">'+rows+'</div><button id="backBtn" type="button" class="secondary">חזור</button></div>');
-  document.getElementById('backBtn').onclick=()=>showMenu();
+  document.getElementById('backBtn').onclick=()=>{ playButtonSound(); showMenu(); };
 }
-
 function showResult(){
   const won=winner==='player';
   state='result';
-  setOverlay(
-    '<div class="panel">'+
-      '<div class="title" style="font-size:clamp(32px,6vw,60px)">'+(won?'🍦 גלידה!':'🚔 גיים אובר')+'</div>'+
-      '<p class="subtitle" style="font-size:clamp(18px,3vw,28px)">'+(won?'סיימת את המדס ולא נפלת על דודי. כל השאר זה בונוס!':gameOverReason)+'</p>'+
-      '<p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'קפוץ עם החץ למעלה או החלק למעלה כדי להימנע מדודי')+'</p>'+
-      (won?'<input id="nameInput" class="name-input" maxlength="14" placeholder="כתוב שם ללוח התוצאות" />':'')+
-      '<div class="menu-buttons">'+
-        (won?'<button id="saveBtn" type="button">שמור תוצאה</button>':'')+
-        '<button id="againBtn" type="button" class="secondary">שחק שוב</button>'+
-        '<button id="menuBtn" type="button">לתפריט הראשי</button>'+
-      '</div>'+
-    '</div>'
-  );
-  document.getElementById('againBtn').onclick=()=>startGame();
-  document.getElementById('menuBtn').onclick=()=>showMenu();
+  setOverlay('<div class="panel"><div class="title" style="font-size:clamp(32px,6vw,60px)">'+(won?'🍦 גלידה!':'🚔 גיים אובר')+'</div><p class="subtitle" style="font-size:clamp(18px,3vw,28px)">'+(won?'סיימת את המדס ולא נפלת על דודי. כל השאר זה בונוס!':gameOverReason)+'</p><p class="subtitle" style="margin-top:10px">'+(won?('זמן סיום: '+formatTime(finishTime-startTime)):'קפוץ עם החץ למעלה או החלק למעלה כדי להימנע מדודי')+'</p>'+(won?'<input id="nameInput" class="name-input" maxlength="14" placeholder="כתוב שם ללוח התוצאות" />':'')+'<div class="menu-buttons">'+(won?'<button id="saveBtn" type="button">שמור תוצאה</button>':'')+'<button id="againBtn" type="button" class="secondary">שחק שוב</button><button id="menuBtn" type="button">לתפריט הראשי</button></div></div>');
+  document.getElementById('againBtn').onclick=()=>{ playButtonSound(); startGame(); };
+  document.getElementById('menuBtn').onclick=()=>{ playButtonSound(); showMenu(); };
   if(won){
     const input=document.getElementById('nameInput');
     input.value='שחקן';
     document.getElementById('saveBtn').onclick=()=>{
+      playButtonSound();
       if(scoreSaved) return;
       saveScore(input.value.trim()||'שחקן', finishTime-startTime);
       scoreSaved=true;
@@ -486,63 +431,40 @@ function showResult(){
     };
   }
 }
-
-function resetRacer(r,x,y){
-  r.x=x;
-  r.baseY=y;
-  r.speed=0;
-  r.anim=0;
-  r.dust=[];
-  r.jumpY=0;
-  r.jumpV=0;
-  r.isJumping=false;
-  if(r.taps){ r.taps=[]; r.cps=0; r.mashBoost=0; }
-  if('phase' in r) r.phase=0;
-  if('targetSpeed' in r) r.targetSpeed=0;
-  altCheatTaps=[];
-}
+function resetRacer(r,x,y){ r.x=x; r.baseY=y; r.speed=0; r.anim=0; r.dust=[]; r.jumpY=0; r.jumpV=0; r.isJumping=false; if(r.taps){r.taps=[]; r.cps=0; r.mashBoost=0;} if('phase' in r)r.phase=0; if('targetSpeed' in r)r.targetSpeed=0; altCheatTaps=[]; }
 function startGame(){
   const m=metrics();
-  state='playing';
-  overlay.innerHTML='';
-  winner=null;
-  scoreSaved=false;
-  gameOverReason='';
-  jumpSlowdown=0;
+  state='playing'; overlay.innerHTML=''; winner=null; scoreSaved=false; gameOverReason='';
+  if(selectedCharacter==='r'){ player.name='רווח'; player.characterId='r'; enemy.name='חזן'; enemy.characterId='h'; }
+  else { player.name='חזן'; player.characterId='h'; enemy.name='רווח'; enemy.characterId='r'; }
+  resetRacer(player,m.W*0.20,m.H*0.60); resetRacer(enemy,m.W*0.17,m.H*0.72);
+  startTime=performance.now(); finishTime=0; blink=0; flash=0; shake=0; cameraX=0; countdown=1.2;
+  officer.active=false; officer.escaped=false; officer.passedPlayer=false; spawnOfficer(true);
+}
+function spawnOfficer(initial=false){ const m=metrics(); const buffer=initial?m.W*0.75:m.W*(0.85+Math.random()*0.55); officer.active=true; officer.escaped=false; officer.passedPlayer=false; officer.x=player.x+buffer+m.W*(0.42+Math.random()*0.18); officer.speed=10+Math.random()*2.5; }
+function doJump(r){
+  if(r.isJumping) return;
+  r.isJumping=true;
+  r.jumpV=-15.5*Math.min(1.25,Math.max(0.8,canvas.height/720));
+  r.anim+=1.2;
+  shake=Math.min(10,shake+1.5);
+  flash=Math.max(flash,0.08);
+  if(r===player) playJumpSound();
+}
+function doSprintTap(){ if(state!=='playing') return; const now=performance.now(); player.taps.push(now); player.taps=player.taps.filter(t=>now-t<=1000); player.cps=player.taps.length; player.mashBoost=Math.min(16,2.5+player.cps*0.72); player.speed+=1.15+Math.min(player.cps*0.14,1.45); player.anim+=1; spawnDust(player); shake=Math.min(10,shake+1.2); flash=0.14; }
 
-  if(selectedCharacter==='r'){
-    player.name='רווח'; player.characterId='r';
-    enemy.name='חזן'; enemy.characterId='h';
-  }else{
-    player.name='חזן'; player.characterId='h';
-    enemy.name='רווח'; enemy.characterId='r';
+document.addEventListener('keydown',e=>{
+  if(state==='cover'){ showMenu(); return; }
+  if(state==='playing'&&e.code==='ArrowUp'&&!e.repeat){ e.preventDefault(); doJump(player); return; }
+  if(state==='playing'&&(e.code==='AltLeft'||e.code==='AltRight')&&!e.repeat){
+    e.preventDefault(); const now=performance.now(); altCheatTaps.push(now); altCheatTaps=altCheatTaps.filter(t=>now-t<=500);
+    if(altCheatTaps.length>=4){ player.speed+=14; player.mashBoost=Math.max(player.mashBoost,20); player.anim+=2; spawnDust(player); spawnDust(player); shake=Math.min(14,shake+2.6); flash=0.22; }
+    return;
   }
-
-  resetRacer(player,m.W*0.20,m.H*0.60);
-  resetRacer(enemy,m.W*0.17,m.H*0.72);
-
-  startTime=performance.now();
-  finishTime=0;
-  blink=0;
-  flash=0;
-  shake=0;
-  cameraX=0;
-  countdown=1.2;
-
-  officer.active=false;
-  officer.escaped=false;
-  officer.passedPlayer=false;
-  spawnOfficer(true);
-}
-function spawnOfficer(initial=false){
-  const m=metrics();
-  const buffer=initial ? m.W*0.75 : m.W*(0.85+Math.random()*0.55);
-  officer.active=true;
-  officer.escaped=false;
-  officer.passedPlayer=false;
-  officer.x=player.x+buffer+m.W*(0.42+Math.random()*0.18);
-  officer.speed=10+Math.random()*2.5;
-}
+  if(state==='playing'&&e.code==='Space'&&!e.repeat){ e.preventDefault(); doSprintTap(); }
+},{passive:false});
+canvas.addEventListener('touchstart',e=>{ if(shouldShowRotateWarning()) return; if(state==='cover'){ e.preventDefault(); showMenu(); return; } if(state!=='playing') return; const t=e.changedTouches[0]; touchStartX=t.clientX; touchStartY=t.clientY; touchStartTime=performance.now(); e.preventDefault(); },{passive:false});
+canvas.addEventListener('touchend',e=>{ if(shouldShowRotateWarning()) return; if(state!=='playing') return; const t=e.changedTouches[0]; const dx=t.clientX-touchStartX, dy=t.clientY-touchStartY, absX=Math.abs(dx), absY=Math.abs(dy), elapsed=performance.now()-touchStartTime; if(dy<-50&&absY>absX) doJump(player); else if(elapsed<260) doSprintTap(); e.preventDefault(); },{passive:false});
 
 function spawnDust(r){
   const m=metrics();
@@ -551,8 +473,8 @@ function spawnDust(r){
   const yOffset=42*unit;
   for(let i=0;i<4;i++){
     r.dust.push({
-      x:r.x+xOffset+Math.random()*(16*unit),
-      y:r.baseY+r.jumpY+yOffset+Math.random()*(8*unit),
+      x:r.x + xOffset + Math.random()*(16*unit),
+      y:r.baseY + r.jumpY + yOffset + Math.random()*(8*unit),
       vx:(-1-Math.random()*2)*unit,
       vy:(-0.2-Math.random()*0.8)*unit,
       life:0.6+Math.random()*0.4,
@@ -560,120 +482,7 @@ function spawnDust(r){
     });
   }
 }
-function spawnJumpDust(r){
-  const m=metrics();
-  const unit=m.S;
-  for(let i=0;i<8;i++){
-    r.dust.push({
-      x:r.x + 10*unit + Math.random()*(24*unit),
-      y:r.baseY + r.jumpY + 44*unit + Math.random()*(6*unit),
-      vx:(-2 + Math.random()*4)*unit,
-      vy:(-1.4 - Math.random()*1.2)*unit,
-      life:0.35 + Math.random()*0.25,
-      size:(3 + Math.random()*5)*unit
-    });
-  }
-}
-function spawnLandingDust(r){
-  const m=metrics();
-  const unit=m.S;
-  for(let i=0;i<12;i++){
-    const dir=i<6 ? -1 : 1;
-    r.dust.push({
-      x:r.x + 18*unit + Math.random()*(12*unit),
-      y:r.baseY + 46*unit + Math.random()*(6*unit),
-      vx:(dir*(1.2 + Math.random()*2.4))*unit,
-      vy:(-0.6 - Math.random()*0.9)*unit,
-      life:0.45 + Math.random()*0.3,
-      size:(4 + Math.random()*6)*unit
-    });
-  }
-}
-
-function doJump(r){
-  if(r.isJumping) return;
-  const mobilePlayerJump = (r===player && isMobileLike()) ? 0.78 : 1;
-  r.isJumping=true;
-  r.jumpV=-15.5 * mobilePlayerJump * Math.min(1.25,Math.max(0.8,canvas.height/720));
-  r.anim+=1.2;
-  shake=Math.min(10,shake+1.5);
-  flash=Math.max(flash,0.08);
-  spawnJumpDust(r);
-}
-function doSprintTap(){
-  if(state!=='playing') return;
-  const now=performance.now();
-  player.taps.push(now);
-  player.taps=player.taps.filter(t=>now-t<=1000);
-  player.cps=player.taps.length;
-  player.mashBoost=Math.min(16,2.5+player.cps*0.72);
-  player.speed+=1.15+Math.min(player.cps*0.14,1.45);
-  player.anim+=1;
-  spawnDust(player);
-  shake=Math.min(10,shake+1.2);
-  flash=0.14;
-}
-
-document.addEventListener('keydown',e=>{
-  if(state==='cover'){ showMenu(); return; }
-  if(state==='playing' && e.code==='ArrowUp' && !e.repeat){ e.preventDefault(); doJump(player); return; }
-  if(state==='playing' && (e.code==='AltLeft'||e.code==='AltRight') && !e.repeat){
-    e.preventDefault();
-    const now=performance.now();
-    altCheatTaps.push(now);
-    altCheatTaps=altCheatTaps.filter(t=>now-t<=500);
-    if(altCheatTaps.length>=4){
-      player.speed+=14;
-      player.mashBoost=Math.max(player.mashBoost,20);
-      player.anim+=2;
-      spawnDust(player);
-      spawnDust(player);
-      shake=Math.min(14,shake+2.6);
-      flash=0.22;
-    }
-    return;
-  }
-  if(state==='playing' && e.code==='Space' && !e.repeat){
-    e.preventDefault();
-    doSprintTap();
-  }
-},{passive:false});
-
-canvas.addEventListener('touchstart',e=>{
-  if(shouldShowRotateWarning()) return;
-  if(state==='cover'){ e.preventDefault(); showMenu(); return; }
-  if(state!=='playing') return;
-  const t=e.changedTouches[0];
-  touchStartX=t.clientX;
-  touchStartY=t.clientY;
-  touchStartTime=performance.now();
-  e.preventDefault();
-},{passive:false});
-
-canvas.addEventListener('touchend',e=>{
-  if(shouldShowRotateWarning()) return;
-  if(state!=='playing') return;
-  const t=e.changedTouches[0];
-  const dx=t.clientX-touchStartX;
-  const dy=t.clientY-touchStartY;
-  const absX=Math.abs(dx);
-  const absY=Math.abs(dy);
-  const elapsed=performance.now()-touchStartTime;
-  if(dy<-50 && absY>absX) doJump(player);
-  else if(elapsed<260) doSprintTap();
-  e.preventDefault();
-},{passive:false});
-
-function updateDust(list,dt){
-  for(let i=list.length-1;i>=0;i--){
-    const p=list[i];
-    p.x+=p.vx*60*dt;
-    p.y+=p.vy*60*dt;
-    p.life-=dt;
-    p.size*=0.985;
-    if(p.life<=0) list.splice(i,1);
-  }
-}
+function updateDust(list,dt){ for(let i=list.length-1;i>=0;i--){ const p=list[i]; p.x+=p.vx*60*dt; p.y+=p.vy*60*dt; p.life-=dt; p.size*=0.985; if(p.life<=0) list.splice(i,1); } }
 function updateJump(r,dt){
   if(!r.isJumping) return;
   r.jumpV+=34*dt*Math.min(1.3,Math.max(0.85,canvas.height/720));
@@ -682,162 +491,17 @@ function updateJump(r,dt){
     r.jumpY=0;
     r.jumpV=0;
     r.isJumping=false;
-    spawnLandingDust(r);
-    if(r===player){
-      jumpSlowdown=0.16;
-    }
+    if(r===player) playLandingSound();
   }
 }
-function triggerGameOver(){
-  winner='enemy';
-  finishTime=performance.now();
-  gameOverReason='נתפסת על פאק באמינות עכשיו תישלח למעצר בבסיס סודי של חיל האוויר';
-  showResult();
-}
-function updateOfficer(dt){
-  const m=metrics();
-  if(!officer.active) return;
-  officer.x-=officer.speed*60*dt*0.22*(m.W/1280);
-  const gap=Math.abs((officer.x+6)-(player.x+18));
-  const air=-player.jumpY;
-  if(!officer.passedPlayer&&officer.x<player.x-12){
-    officer.passedPlayer=true;
-    officer.escaped=true;
-  }
-  if(gap<m.W*0.024&&air<m.H*0.08){
-    triggerGameOver();
-    return;
-  }
-  if(officer.x<cameraX-m.W*0.18||officer.escaped) spawnOfficer(false);
-}
-function updatePlaying(dt,now){
-  const m=metrics();
-  if(countdown>0) countdown-=dt;
+function triggerGameOver(){ winner='enemy'; finishTime=performance.now(); gameOverReason='נתפסת על פאק באמינות עכשיו תישלח למעצר בבסיס סודי של חיל האוויר'; showResult(); }
+function updateOfficer(dt){ const m=metrics(); if(!officer.active) return; officer.x-=officer.speed*60*dt*0.22*(m.W/1280); const gap=Math.abs((officer.x+6)-(player.x+18)), air=-player.jumpY; if(!officer.passedPlayer&&officer.x<player.x-12){ officer.passedPlayer=true; officer.escaped=true; } if(gap<m.W*0.024&&air<m.H*0.08){ triggerGameOver(); return; } if(officer.x<cameraX-m.W*0.18||officer.escaped) spawnOfficer(false); }
+function updatePlaying(dt,now){ const m=metrics(); if(countdown>0) countdown-=dt; player.taps=player.taps.filter(t=>now-t<=1000); player.cps=player.taps.length; player.mashBoost*=Math.pow(0.62,dt); player.speed*=Math.pow(0.55,dt); const pv=1.3+player.speed+player.mashBoost; player.x+=pv*60*dt*0.18*(m.W/1280); player.anim+=pv*dt*0.72; enemy.phase+=dt; const gap=player.x-enemy.x; const desired=pv*0.985+Math.max(0,gap)*0.0048-Math.max(0,-gap)*0.0022; const eased=Math.max(1.8,desired+Math.sin(enemy.phase*3.8)*0.16); enemy.targetSpeed+=(eased-enemy.targetSpeed)*Math.min(1,dt*2.3); enemy.speed+=(enemy.targetSpeed-enemy.speed)*Math.min(1,dt*3.1); enemy.speed=Math.max(1.6,enemy.speed); enemy.x+=enemy.speed*60*dt*0.18*(m.W/1280); enemy.anim+=enemy.speed*dt*0.72; if(Math.random()<0.16) spawnDust(enemy); updateJump(player,dt); updateJump(enemy,dt); updateOfficer(dt); updateDust(player.dust,dt); updateDust(enemy.dust,dt); cameraX=Math.max(0,player.x-m.W*0.20); cameraX=Math.min(cameraX,m.finishX-m.W*0.55); shake*=Math.pow(0.18,dt); flash*=Math.pow(0.07,dt); blink+=dt; if(player.x>=m.finishX){ winner='player'; finishTime=now; showResult(); } else if(enemy.x>=m.finishX){ winner='enemy'; finishTime=now; gameOverReason=enemy.name+' חטף את הגלידה לפניך'; showResult(); } }
 
-  player.taps=player.taps.filter(t=>now-t<=1000);
-  player.cps=player.taps.length;
-  player.mashBoost*=Math.pow(0.62,dt);
-  player.speed*=Math.pow(0.55,dt);
-
-  const slowdownFactor = jumpSlowdown > 0 ? (isMobileLike() ? 0.72 : 0.84) : 1;
-  const pv=(1.3+player.speed+player.mashBoost)*slowdownFactor;
-  player.x+=pv*60*dt*0.18*(m.W/1280);
-  player.anim+=pv*dt*0.72;
-
-  enemy.phase+=dt;
-  const gap=player.x-enemy.x;
-  const desired=pv*0.985+Math.max(0,gap)*0.0048-Math.max(0,-gap)*0.0022;
-  const eased=Math.max(1.8,desired+Math.sin(enemy.phase*3.8)*0.16);
-  enemy.targetSpeed+=(eased-enemy.targetSpeed)*Math.min(1,dt*2.3);
-  enemy.speed+=(enemy.targetSpeed-enemy.speed)*Math.min(1,dt*3.1);
-  enemy.speed=Math.max(1.6,enemy.speed);
-  enemy.x+=enemy.speed*60*dt*0.18*(m.W/1280);
-  enemy.anim+=enemy.speed*dt*0.72;
-  if(Math.random()<0.16) spawnDust(enemy);
-
-  updateJump(player,dt);
-  updateJump(enemy,dt);
-  updateOfficer(dt);
-  updateDust(player.dust,dt);
-  updateDust(enemy.dust,dt);
-
-  cameraX=Math.max(0,player.x-m.W*0.20);
-  cameraX=Math.min(cameraX,m.finishX-m.W*0.55);
-  shake*=Math.pow(0.18,dt);
-  flash*=Math.pow(0.07,dt);
-  blink+=dt;
-
-  if(jumpSlowdown>0){
-    jumpSlowdown=Math.max(0,jumpSlowdown-dt);
-  }
-
-  if(player.x>=m.finishX){
-    winner='player';
-    finishTime=now;
-    showResult();
-  }else if(enemy.x>=m.finishX){
-    winner='enemy';
-    finishTime=now;
-    gameOverReason=enemy.name+' חטף את הגלידה לפניך';
-    showResult();
-  }
-}
-
-function drawSky(){
-  const {W,H}=metrics();
-  const sky=ctx.createLinearGradient(0,0,0,H*0.48);
-  sky.addColorStop(0,'#5c3ea1');
-  sky.addColorStop(0.55,'#ef8d4b');
-  sky.addColorStop(1,'#ffd28a');
-  ctx.fillStyle=sky;
-  ctx.fillRect(0,0,W,H*0.52);
-}
-function drawCactus(x,y,s=1){
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(s,s);
-  ctx.fillStyle='#2c8e50';
-  ctx.fillRect(-8,-46,16,50);
-  ctx.fillRect(-22,-30,12,10);
-  ctx.fillRect(10,-34,12,10);
-  ctx.fillRect(-22,-52,10,22);
-  ctx.fillRect(12,-56,10,22);
-  ctx.restore();
-}
-function drawIceCream(x,y,s){
-  ctx.fillStyle='#c17d3d';
-  ctx.beginPath();
-  ctx.moveTo(x,y+18*s);
-  ctx.lineTo(x+18*s,y+18*s);
-  ctx.lineTo(x+9*s,y+42*s);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle='#f49ac2';
-  ctx.beginPath();
-  ctx.arc(x+9*s,y+8*s,12*s,0,Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle='#9ae6ff';
-  ctx.beginPath();
-  ctx.arc(x+22*s,y+12*s,10*s,0,Math.PI*2);
-  ctx.fill();
-}
-function drawGround(){
-  const m=metrics();
-  ctx.save();
-  ctx.translate(-cameraX,0);
-  ctx.fillStyle='#d6a85a';
-  ctx.fillRect(cameraX-40,m.H*0.50,m.W+m.worldLength,m.H*0.50);
-  ctx.fillStyle='#c79247';
-  for(let i=0;i<m.worldLength+800;i+=Math.max(18,m.W*0.018)){
-    ctx.fillRect(i,m.H*0.72+((i/24)%2)*4,Math.max(8,m.W*0.008),Math.max(3,m.H*0.004));
-  }
-  ctx.fillStyle='#454a52';
-  ctx.fillRect(0,m.roadY,m.worldLength,m.roadH);
-
-  ctx.strokeStyle='#f6d04d';
-  ctx.lineWidth=Math.max(3,m.W*0.004);
-  ctx.setLineDash([Math.max(12,m.W*0.018),Math.max(10,m.W*0.014)]);
-  ctx.beginPath();
-  ctx.moveTo(0,m.roadY+m.roadH/2);
-  ctx.lineTo(m.worldLength,m.roadY+m.roadH/2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  for(let i=0;i<40;i++){
-    drawCactus(150+i*(m.W*0.16)+(i%3)*25,m.H*(0.58+(i%4)*0.09),0.75+(i%2)*0.18);
-  }
-
-  ctx.fillStyle='#f7f1d5';
-  ctx.fillRect(m.finishX,m.roadY-16*m.S,12*m.S,m.roadH+30*m.S);
-  for(let y=m.roadY-16*m.S;y<m.roadY+m.roadH+20*m.S;y+=18*m.S){
-    ctx.fillStyle=Math.round(y/(18*m.S))%2===0?'#111':'#fff';
-    ctx.fillRect(m.finishX+12*m.S,y,18*m.S,18*m.S);
-  }
-
-  drawIceCream(m.finishX+60*m.S,m.roadY+40*m.S,m.S);
-  drawIceCream(m.finishX+60*m.S,m.roadY+82*m.S,m.S);
-  ctx.restore();
-}
+function drawSky(){ const {W,H}=metrics(); const sky=ctx.createLinearGradient(0,0,0,H*0.48); sky.addColorStop(0,'#5c3ea1'); sky.addColorStop(0.55,'#ef8d4b'); sky.addColorStop(1,'#ffd28a'); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.52); }
+function drawCactus(x,y,s=1){ ctx.save(); ctx.translate(x,y); ctx.scale(s,s); ctx.fillStyle='#2c8e50'; ctx.fillRect(-8,-46,16,50); ctx.fillRect(-22,-30,12,10); ctx.fillRect(10,-34,12,10); ctx.fillRect(-22,-52,10,22); ctx.fillRect(12,-56,10,22); ctx.restore(); }
+function drawIceCream(x,y,s){ ctx.fillStyle='#c17d3d'; ctx.beginPath(); ctx.moveTo(x,y+18*s); ctx.lineTo(x+18*s,y+18*s); ctx.lineTo(x+9*s,y+42*s); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f49ac2'; ctx.beginPath(); ctx.arc(x+9*s,y+8*s,12*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#9ae6ff'; ctx.beginPath(); ctx.arc(x+22*s,y+12*s,10*s,0,Math.PI*2); ctx.fill(); }
+function drawGround(){ const m=metrics(); ctx.save(); ctx.translate(-cameraX,0); ctx.fillStyle='#d6a85a'; ctx.fillRect(cameraX-40,m.H*0.50,m.W+m.worldLength,m.H*0.50); ctx.fillStyle='#c79247'; for(let i=0;i<m.worldLength+800;i+=Math.max(18,m.W*0.018)) ctx.fillRect(i,m.H*0.72+((i/24)%2)*4,Math.max(8,m.W*0.008),Math.max(3,m.H*0.004)); ctx.fillStyle='#454a52'; ctx.fillRect(0,m.roadY,m.worldLength,m.roadH); ctx.strokeStyle='#f6d04d'; ctx.lineWidth=Math.max(3,m.W*0.004); ctx.setLineDash([Math.max(12,m.W*0.018),Math.max(10,m.W*0.014)]); ctx.beginPath(); ctx.moveTo(0,m.roadY+m.roadH/2); ctx.lineTo(m.worldLength,m.roadY+m.roadH/2); ctx.stroke(); ctx.setLineDash([]); for(let i=0;i<40;i++) drawCactus(150+i*(m.W*0.16)+(i%3)*25,m.H*(0.58+(i%4)*0.09),0.75+(i%2)*0.18); ctx.fillStyle='#f7f1d5'; ctx.fillRect(m.finishX,m.roadY-16*m.S,12*m.S,m.roadH+30*m.S); for(let y=m.roadY-16*m.S;y<m.roadY+m.roadH+20*m.S;y+=18*m.S){ ctx.fillStyle=Math.round(y/(18*m.S))%2===0?'#111':'#fff'; ctx.fillRect(m.finishX+12*m.S,y,18*m.S,18*m.S); } drawIceCream(m.finishX+60*m.S,m.roadY+40*m.S,m.S); drawIceCream(m.finishX+60*m.S,m.roadY+82*m.S,m.S); ctx.restore(); }
 function drawDust(list){
   for(const p of list){
     const sx=p.x-cameraX;
@@ -848,196 +512,11 @@ function drawDust(list){
   }
   ctx.globalAlpha=1;
 }
-function drawRunner(r){
-  const m=metrics();
-  const unit=m.S;
-  const bob=r.isJumping?0:Math.sin(r.anim*8)*3*unit;
-  const x=r.x-cameraX;
-  const y=r.baseY+r.jumpY+bob;
-  const frame=Math.floor(r.anim*10)%4;
-  if(x<-80||x>m.W+80) return;
-
-  drawDust(r.dust);
-
-  const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r';
-  const legA=r.isJumping?-16:frame===0?16:frame===1?6:frame===2?-10:2;
-  const legB=r.isJumping?18:-legA*0.8;
-  const armA=r.isJumping?-22:-legA*0.7;
-  const armB=r.isJumping?20:-armA*0.7;
-
-  const limb=(x1,y1,len,angle,color,width)=>{
-    const rad=angle*Math.PI/180;
-    ctx.strokeStyle=color;
-    ctx.lineWidth=width*unit;
-    ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit);
-    ctx.stroke();
-  };
-
-  limb(x+18*unit,y+40*unit,20,90+legA,uniformDark,10);
-  limb(x+18*unit,y+40*unit,20,90+legB,uniformDark,10);
-  limb(x+18*unit,y+22*unit,16,90+armA,skin,8);
-  limb(x+18*unit,y+22*unit,16,90+armB,skin,8);
-
-  ctx.fillStyle=uniform;
-  ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit);
-  ctx.fillStyle=uniformDark;
-  ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit);
-  ctx.fillStyle=strap;
-  ctx.fillRect(x+18*unit,y+10*unit,6*unit,28*unit);
-  ctx.fillStyle=skin;
-  ctx.beginPath();
-  ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle=hair;
-  ctx.beginPath();
-  ctx.arc(x+18*unit,y-1*unit,15*unit,Math.PI,Math.PI*2);
-  ctx.fill();
-  ctx.fillRect(x+6*unit,y-1*unit,24*unit,5*unit);
-  ctx.fillStyle='#111';
-  ctx.fillRect(x+11*unit,y+18*unit,4*unit,4*unit);
-  ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit);
-  ctx.fillStyle='#8a3a2c';
-  ctx.fillRect(x+14*unit,y+24*unit,8*unit,2*unit);
-
-  if(beard){
-    ctx.fillStyle='#1b1b1b';
-    ctx.fillRect(x+10*unit,y+23*unit,16*unit,8*unit);
-    ctx.fillRect(x+12*unit,y+30*unit,12*unit,5*unit);
-  }else{
-    ctx.fillStyle='#2b2b2b';
-    ctx.fillRect(x+12*unit,y+24*unit,11*unit,5*unit);
-  }
-}
-function drawOfficer(){
-  const m=metrics();
-  if(!officer.active) return;
-  const x=officer.x-cameraX;
-  if(x<-120||x>m.W+120) return;
-  const unit=m.S;
-  const y=player.baseY+Math.sin(lastTime*0.03)*2*unit;
-  const frame=Math.floor(lastTime*0.02)%4;
-  const legA=frame===0?18:frame===1?4:frame===2?-12:2;
-  const legB=-legA*0.8;
-  const armA=-legA*0.7;
-  const armB=-armA*0.7;
-
-  const limb=(x1,y1,len,angle,color,width)=>{
-    const rad=angle*Math.PI/180;
-    ctx.strokeStyle=color;
-    ctx.lineWidth=width*unit;
-    ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit);
-    ctx.stroke();
-  };
-
-  limb(x+18*unit,y+40*unit,20,90+legA,'#22334f',10);
-  limb(x+18*unit,y+40*unit,20,90+legB,'#22334f',10);
-  limb(x+18*unit,y+22*unit,16,90+armA,'#f1c27d',8);
-  limb(x+18*unit,y+22*unit,16,90+armB,'#f1c27d',8);
-
-  ctx.fillStyle='#445a88';
-  ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit);
-  ctx.fillStyle='#22334f';
-  ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit);
-  ctx.fillStyle='#f1c27d';
-  ctx.beginPath();
-  ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle='#111';
-  ctx.fillRect(x+4*unit,y-8*unit,28*unit,9*unit);
-  ctx.fillRect(x+10*unit,y-2*unit,16*unit,3*unit);
-  ctx.fillRect(x+12*unit,y+18*unit,4*unit,4*unit);
-  ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit);
-  ctx.fillStyle='#8a3a2c';
-  ctx.fillRect(x+12*unit,y+25*unit,12*unit,2*unit);
-
-  ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.fillRect(x-8*unit,y-26*unit,56*unit,18*unit);
-  ctx.fillStyle='#fff6d6';
-  ctx.font='bold '+Math.max(12,m.W*0.011)+'px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('דודי',x+18*unit,y-12*unit);
-}
-function drawHud(now){
-  if(state!=='playing') return;
-  const l=layout(), m=metrics();
-
-  ctx.fillStyle='rgba(0,0,0,.45)';
-  ctx.fillRect(l.hudX,l.hudY,l.hudW,l.hudH);
-  ctx.strokeStyle='#ffd166';
-  ctx.lineWidth=Math.max(2,m.W*0.0025);
-  ctx.strokeRect(l.hudX,l.hudY,l.hudW,l.hudH);
-
-  ctx.fillStyle='#fff6d6';
-  ctx.font='bold '+l.hudTitleFont+'px Arial';
-  ctx.textAlign='right';
-  ctx.fillText('ספרינט: רווח או נגיעה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8);
-  ctx.fillText('קפיצה: חץ או החלקה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18);
-
-  ctx.font=l.hudBodyFont+'px Arial';
-  ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),l.hudX+l.hudW-14,l.hudY+l.hudH-44);
-  ctx.fillText('דמות: '+player.name,l.hudX+l.hudW-14,l.hudY+l.hudH-24);
-  ctx.fillText('זמן: '+formatTime(now-startTime),l.hudX+l.hudW-14,l.hudY+l.hudH-4);
-
-  drawProgressBar(l.progressX,l.progressY,l.progressW,l.progressH,player.x,enemy.x);
-  drawDistanceBar(l.distanceX,l.distanceY,l.distanceW,l.distanceH);
-
-  if(countdown>0){
-    const boxW=m.W*0.26, boxH=m.H*0.06, x=(m.W-boxW)/2, y=m.H*0.13;
-    ctx.fillStyle='rgba(0,0,0,.45)';
-    ctx.fillRect(x,y,boxW,boxH);
-    ctx.strokeStyle='#ffd166';
-    ctx.strokeRect(x,y,boxW,boxH);
-    ctx.fillStyle='#fff';
-    ctx.font='bold '+Math.max(16,m.W*0.018)+'px Arial';
-    ctx.textAlign='center';
-    ctx.fillText('תזמון לא נכון = גיים אובר',x+boxW/2,y+boxH*0.68);
-  }
-}
-
-function drawProgressBar(x,y,w,h,pX,eX){
-  const m=metrics();
-  ctx.fillStyle='rgba(0,0,0,.4)';
-  ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle='#ffd166';
-  ctx.lineWidth=Math.max(2,m.W*0.0025);
-  ctx.strokeRect(x,y,w,h);
-
-  const start=m.W*0.20;
-  const end=m.finishX;
-  const pT=Math.min(1,Math.max(0,(pX-start)/(end-start)));
-  const eT=Math.min(1,Math.max(0,(eX-start)/(end-start)));
-
-  ctx.fillStyle='#5eead4';
-  ctx.fillRect(x+pT*w-6,y-4,12,h+8);
-  ctx.fillStyle='#ff7b72';
-  ctx.fillRect(x+eT*w-6,y-4,12,h+8);
-  ctx.fillStyle='#fff';
-  ctx.font=Math.max(11,m.W*0.012)+'px Arial';
-  ctx.textAlign='center';
-  ctx.fillText(player.name,x+pT*w,y+h+18);
-  ctx.fillText(enemy.name,x+eT*w,y+h+18);
-}
-function drawDistanceBar(x,y,w,h){
-  const m=metrics();
-  ctx.fillStyle='rgba(0,0,0,.45)';
-  ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle='#ffd166';
-  ctx.strokeRect(x,y,w,h);
-  const ratio=Math.min(1,Math.max(0,player.x/m.finishX));
-  ctx.fillStyle='#84fab0';
-  ctx.fillRect(x+4,y+4,(w-8)*ratio,h-8);
-  ctx.fillStyle='#fff';
-  ctx.font='bold '+Math.max(11,m.W*0.012)+'px Arial';
-  ctx.textAlign='center';
-  ctx.fillText('התקדמות בכביש 90',x+w/2,y+h*0.66);
-}
-
+function drawRunner(r){ const m=metrics(), unit=m.S, bob=r.isJumping?0:Math.sin(r.anim*8)*3*unit, x=r.x-cameraX, y=r.baseY+r.jumpY+bob, frame=Math.floor(r.anim*10)%4; if(x<-80||x>m.W+80) return; drawDust(r.dust); const skin='#f1c27d',hair='#151515',uniform='#738c3a',uniformDark='#4a5e21',strap='#20252b',beard=r.characterId==='r'; const legA=r.isJumping?-16:frame===0?16:frame===1?6:frame===2?-10:2, legB=r.isJumping?18:-legA*0.8, armA=r.isJumping?-22:-legA*0.7, armB=r.isJumping?20:-armA*0.7; const limb=(x1,y1,len,angle,color,width)=>{ const rad=angle*Math.PI/180; ctx.strokeStyle=color; ctx.lineWidth=width*unit; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit); ctx.stroke(); }; limb(x+18*unit,y+40*unit,20,90+legA,uniformDark,10); limb(x+18*unit,y+40*unit,20,90+legB,uniformDark,10); limb(x+18*unit,y+22*unit,16,90+armA,skin,8); limb(x+18*unit,y+22*unit,16,90+armB,skin,8); ctx.fillStyle=uniform; ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit); ctx.fillStyle=uniformDark; ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit); ctx.fillStyle=strap; ctx.fillRect(x+18*unit,y+10*unit,6*unit,28*unit); ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2); ctx.fill(); ctx.fillStyle=hair; ctx.beginPath(); ctx.arc(x+18*unit,y-1*unit,15*unit,Math.PI,Math.PI*2); ctx.fill(); ctx.fillRect(x+6*unit,y-1*unit,24*unit,5*unit); ctx.fillStyle='#111'; ctx.fillRect(x+11*unit,y+18*unit,4*unit,4*unit); ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit); ctx.fillStyle='#8a3a2c'; ctx.fillRect(x+14*unit,y+24*unit,8*unit,2*unit); if(beard){ ctx.fillStyle='#1b1b1b'; ctx.fillRect(x+10*unit,y+23*unit,16*unit,8*unit); ctx.fillRect(x+12*unit,y+30*unit,12*unit,5*unit); } else { ctx.fillStyle='#2b2b2b'; ctx.fillRect(x+12*unit,y+24*unit,11*unit,5*unit); } }
+function drawOfficer(){ const m=metrics(); if(!officer.active) return; const x=officer.x-cameraX; if(x<-120||x>m.W+120) return; const unit=m.S, y=player.baseY+Math.sin(lastTime*0.03)*2*unit, frame=Math.floor(lastTime*0.02)%4, legA=frame===0?18:frame===1?4:frame===2?-12:2, legB=-legA*0.8, armA=-legA*0.7, armB=-armA*0.7; const limb=(x1,y1,len,angle,color,width)=>{ const rad=angle*Math.PI/180; ctx.strokeStyle=color; ctx.lineWidth=width*unit; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+Math.cos(rad)*len*unit,y1+Math.sin(rad)*len*unit); ctx.stroke(); }; limb(x+18*unit,y+40*unit,20,90+legA,'#22334f',10); limb(x+18*unit,y+40*unit,20,90+legB,'#22334f',10); limb(x+18*unit,y+22*unit,16,90+armA,'#f1c27d',8); limb(x+18*unit,y+22*unit,16,90+armB,'#f1c27d',8); ctx.fillStyle='#445a88'; ctx.fillRect(x+4*unit,y+10*unit,28*unit,28*unit); ctx.fillStyle='#22334f'; ctx.fillRect(x+4*unit,y+30*unit,28*unit,8*unit); ctx.fillStyle='#f1c27d'; ctx.beginPath(); ctx.arc(x+18*unit,y+2*unit,15*unit,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#111'; ctx.fillRect(x+4*unit,y-8*unit,28*unit,9*unit); ctx.fillRect(x+10*unit,y-2*unit,16*unit,3*unit); ctx.fillRect(x+12*unit,y+18*unit,4*unit,4*unit); ctx.fillRect(x+21*unit,y+18*unit,4*unit,4*unit); ctx.fillStyle='#8a3a2c'; ctx.fillRect(x+12*unit,y+25*unit,12*unit,2*unit); ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(x-8*unit,y-26*unit,56*unit,18*unit); ctx.fillStyle='#fff6d6'; ctx.font='bold '+Math.max(12,m.W*0.011)+'px Arial'; ctx.textAlign='center'; ctx.fillText('דודי',x+18*unit,y-12*unit); }
+function drawHud(now){ if(state!=='playing') return; const l=layout(), m=metrics(); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(l.hudX,l.hudY,l.hudW,l.hudH); ctx.strokeStyle='#ffd166'; ctx.lineWidth=Math.max(2,m.W*0.0025); ctx.strokeRect(l.hudX,l.hudY,l.hudW,l.hudH); ctx.fillStyle='#fff6d6'; ctx.font='bold '+l.hudTitleFont+'px Arial'; ctx.textAlign='right'; ctx.fillText('ספרינט: רווח או נגיעה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont+8); ctx.fillText('קפיצה: חץ או החלקה',l.hudX+l.hudW-14,l.hudY+l.hudTitleFont*2+18); ctx.font=l.hudBodyFont+'px Arial'; ctx.fillText('קצב לחיצה: '+player.cps.toFixed(0),l.hudX+l.hudW-14,l.hudY+l.hudH-44); ctx.fillText('דמות: '+player.name,l.hudX+l.hudW-14,l.hudY+l.hudH-24); ctx.fillText('זמן: '+formatTime(now-startTime),l.hudX+l.hudW-14,l.hudY+l.hudH-4); drawProgressBar(l.progressX,l.progressY,l.progressW,l.progressH,player.x,enemy.x); drawDistanceBar(l.distanceX,l.distanceY,l.distanceW,l.distanceH); if(countdown>0){ const boxW=m.W*0.26, boxH=m.H*0.06, x=(m.W-boxW)/2, y=m.H*0.13; ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(x,y,boxW,boxH); ctx.strokeStyle='#ffd166'; ctx.strokeRect(x,y,boxW,boxH); ctx.fillStyle='#fff'; ctx.font='bold '+Math.max(16,m.W*0.018)+'px Arial'; ctx.textAlign='center'; ctx.fillText('תזמון לא נכון = גיים אובר',x+boxW/2,y+boxH*0.68); } }
+function drawProgressBar(x,y,w,h,pX,eX){ const m=metrics(); ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#ffd166'; ctx.lineWidth=Math.max(2,m.W*0.0025); ctx.strokeRect(x,y,w,h); const start=m.W*0.20, end=m.finishX, pT=Math.min(1,Math.max(0,(pX-start)/(end-start))), eT=Math.min(1,Math.max(0,(eX-start)/(end-start))); ctx.fillStyle='#5eead4'; ctx.fillRect(x+pT*w-6,y-4,12,h+8); ctx.fillStyle='#ff7b72'; ctx.fillRect(x+eT*w-6,y-4,12,h+8); ctx.fillStyle='#fff'; ctx.font=Math.max(11,m.W*0.012)+'px Arial'; ctx.textAlign='center'; ctx.fillText(player.name,x+pT*w,y+h+18); ctx.fillText(enemy.name,x+eT*w,y+h+18); }
+function drawDistanceBar(x,y,w,h){ const m=metrics(); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#ffd166'; ctx.strokeRect(x,y,w,h); const ratio=Math.min(1,Math.max(0,player.x/m.finishX)); ctx.fillStyle='#84fab0'; ctx.fillRect(x+4,y+4,(w-8)*ratio,h-8); ctx.fillStyle='#fff'; ctx.font='bold '+Math.max(11,m.W*0.012)+'px Arial'; ctx.textAlign='center'; ctx.fillText('התקדמות בכביש 90',x+w/2,y+h*0.66); }
 function drawTitleOnCanvas(){
   if(state==='cover'){
     const {W,H}=metrics();
@@ -1050,171 +529,18 @@ function drawTitleOnCanvas(){
     ctx.globalAlpha=1;
   }
 }
-function drawCoverBackground(){
-  const {W,H}=metrics();
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#1f2d5d');
-  sky.addColorStop(0.36,'#385b96');
-  sky.addColorStop(0.72,'#f09a4b');
-  sky.addColorStop(1,'#f4d082');
-  ctx.fillStyle=sky;
-  ctx.fillRect(0,0,W,H);
-
-  const drawDune=(x,baseY,w,h)=>{
-    ctx.beginPath();
-    ctx.moveTo(x-w/2,baseY);
-    ctx.quadraticCurveTo(x,baseY-h,x+w/2,baseY);
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  ctx.fillStyle='#e2b56d';
-  drawDune(W*0.16,H*0.51,W*0.20,H*0.13);
-  drawDune(W*0.36,H*0.51,W*0.25,H*0.15);
-  drawDune(W*0.58,H*0.51,W*0.19,H*0.11);
-  drawDune(W*0.80,H*0.51,W*0.23,H*0.14);
-
-  ctx.fillStyle='#d6a85a';
-  ctx.fillRect(0,H*0.51,W,H*0.49);
-  ctx.fillStyle='#c79247';
-  for(let i=0;i<W;i+=Math.max(16,W*0.02)){
-    ctx.fillRect(i,H*0.78+((i/28)%2)*4,Math.max(8,W*0.01),Math.max(2,H*0.005));
-  }
-
-  ctx.fillStyle='#333842';
-  ctx.beginPath();
-  ctx.moveTo(W*0.20,H);
-  ctx.bezierCurveTo(W*0.28,H*0.83,W*0.36,H*0.73,W*0.48,H*0.66);
-  ctx.bezierCurveTo(W*0.60,H*0.59,W*0.73,H*0.57,W,H*0.69);
-  ctx.lineTo(W,H);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle='#ffd54a';
-  ctx.lineWidth=Math.max(4,W*0.006);
-  ctx.setLineDash([Math.max(18,W*0.02),Math.max(12,W*0.015)]);
-  ctx.beginPath();
-  ctx.moveTo(W*0.60,H);
-  ctx.bezierCurveTo(W*0.57,H*0.86,W*0.56,H*0.76,W*0.60,H*0.69);
-  ctx.bezierCurveTo(W*0.66,H*0.62,W*0.77,H*0.61,W*0.88,H*0.65);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  const c=(x,y,s=1)=>{
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.scale(s,s);
-    ctx.fillStyle='#2c8e50';
-    ctx.fillRect(-9,-56,18,62);
-    ctx.fillRect(-24,-37,12,12);
-    ctx.fillRect(12,-33,12,12);
-    ctx.fillRect(-24,-58,10,22);
-    ctx.fillRect(14,-56,10,22);
-    ctx.restore();
-  };
-  c(W*0.11,H*0.60,0.9);
-  c(W*0.25,H*0.58,0.8);
-  c(W*0.48,H*0.57,0.8);
-  c(W*0.73,H*0.58,0.85);
-  c(W*0.90,H*0.60,0.95);
-
-  const glow=ctx.createRadialGradient(W/2,H*0.16,20,W/2,H*0.16,W*0.20);
-  glow.addColorStop(0,'rgba(255,223,120,.34)');
-  glow.addColorStop(1,'rgba(255,223,120,0)');
-  ctx.fillStyle=glow;
-  ctx.fillRect(0,0,W,H*0.35);
-
-  ctx.textAlign='center';
-  ctx.lineWidth=Math.max(4,W*0.006);
-  ctx.strokeStyle='#5d2208';
-  ctx.fillStyle='#ffe06e';
-  ctx.font='bold '+Math.max(30,W*0.06)+'px Arial';
-  ctx.strokeText(TITLE,W/2,H*0.18);
-  ctx.fillText(TITLE,W/2,H*0.18);
-}
-function drawMainCoverImage(){
-  const {W,H}=metrics();
-  if(coverImage.complete&&coverImage.naturalWidth>0){
-    ctx.drawImage(coverImage,0,0,W,H);
-    ctx.fillStyle='rgba(0,0,0,0.18)';
-    ctx.fillRect(0,0,W,H);
-  } else {
-    drawCoverBackground();
-  }
-}
-function drawScene(now){
-  const {W,H}=metrics();
-  ctx.save();
-  const sx=(Math.random()-0.5)*shake;
-  const sy=(Math.random()-0.5)*shake;
-  ctx.translate(sx,sy);
-
-  if(state==='cover'){
-    drawMainCoverImage();
-    drawTitleOnCanvas();
-  }else if(state==='menu'||state==='scoreboard'||state==='result'){
-    drawCoverBackground();
-  }else{
-    drawSky();
-    drawGround();
-    drawRunner(enemy);
-    drawOfficer();
-    drawRunner(player);
-    drawHud(now);
-  }
-
-  if(flash>0.01){
-    ctx.fillStyle='rgba(255,255,255,'+flash+')';
-    ctx.fillRect(0,0,W,H);
-  }
-  ctx.restore();
-}
-
-function tryLockLandscape(){
-  try{
-    if(screen.orientation&&screen.orientation.lock&&isMobileLike()){
-      screen.orientation.lock('landscape');
-    }
-  }catch(e){}
-}
-
-overlay.addEventListener('scroll', updateScrollHint);
-window.addEventListener('resize',()=>{ resizeCanvas(); updateRotateWarning(); updateScrollHint(); });
-window.addEventListener('orientationchange',()=>{ resizeCanvas(); updateRotateWarning(); updateScrollHint(); });
-window.addEventListener('load',()=>{ resizeCanvas(); updateRotateWarning(); updateScrollHint(); tryLockLandscape(); });
-
-function loop(ts){
-  const now=ts||performance.now();
-  const dt=Math.min(0.033,(now-lastTime)/1000||0.016);
-  lastTime=now;
-
-  updateRotateWarning();
-
-  if(shouldShowRotateWarning()){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    drawMainCoverImage();
-    requestAnimationFrame(loop);
-    return;
-  }
-
-  if(state==='playing') updatePlaying(dt,now);
-  else{
-    shake*=Math.pow(0.18,dt||0.016);
-    flash*=Math.pow(0.07,dt||0.016);
-    blink+=dt||0.016;
-    updateDust(player.dust,dt||0.016);
-    updateDust(enemy.dust,dt||0.016);
-  }
-
-  drawScene(now);
-  requestAnimationFrame(loop);
-}
-
-resizeCanvas();
-updateRotateWarning();
-updateScrollHint();
-showCover();
-requestAnimationFrame(loop);
+function drawCoverBackground(){ const {W,H}=metrics(); const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#1f2d5d'); sky.addColorStop(0.36,'#385b96'); sky.addColorStop(0.72,'#f09a4b'); sky.addColorStop(1,'#f4d082'); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H); const drawDune=(x,baseY,w,h)=>{ ctx.beginPath(); ctx.moveTo(x-w/2,baseY); ctx.quadraticCurveTo(x,baseY-h,x+w/2,baseY); ctx.closePath(); ctx.fill(); }; ctx.fillStyle='#e2b56d'; drawDune(W*0.16,H*0.51,W*0.20,H*0.13); drawDune(W*0.36,H*0.51,W*0.25,H*0.15); drawDune(W*0.58,H*0.51,W*0.19,H*0.11); drawDune(W*0.80,H*0.51,W*0.23,H*0.14); ctx.fillStyle='#d6a85a'; ctx.fillRect(0,H*0.51,W,H*0.49); ctx.fillStyle='#c79247'; for(let i=0;i<W;i+=Math.max(16,W*0.02)) ctx.fillRect(i,H*0.78+((i/28)%2)*4,Math.max(8,W*0.01),Math.max(2,H*0.005)); ctx.fillStyle='#333842'; ctx.beginPath(); ctx.moveTo(W*0.20,H); ctx.bezierCurveTo(W*0.28,H*0.83,W*0.36,H*0.73,W*0.48,H*0.66); ctx.bezierCurveTo(W*0.60,H*0.59,W*0.73,H*0.57,W,H*0.69); ctx.lineTo(W,H); ctx.closePath(); ctx.fill(); ctx.strokeStyle='#ffd54a'; ctx.lineWidth=Math.max(4,W*0.006); ctx.setLineDash([Math.max(18,W*0.02),Math.max(12,W*0.015)]); ctx.beginPath(); ctx.moveTo(W*0.60,H); ctx.bezierCurveTo(W*0.57,H*0.86,W*0.56,H*0.76,W*0.60,H*0.69); ctx.bezierCurveTo(W*0.66,H*0.62,W*0.77,H*0.61,W*0.88,H*0.65); ctx.stroke(); ctx.setLineDash([]); const c=(x,y,s=1)=>{ ctx.save(); ctx.translate(x,y); ctx.scale(s,s); ctx.fillStyle='#2c8e50'; ctx.fillRect(-9,-56,18,62); ctx.fillRect(-24,-37,12,12); ctx.fillRect(12,-33,12,12); ctx.fillRect(-24,-58,10,22); ctx.fillRect(14,-56,10,22); ctx.restore(); }; c(W*0.11,H*0.60,0.9); c(W*0.25,H*0.58,0.8); c(W*0.48,H*0.57,0.8); c(W*0.73,H*0.58,0.85); c(W*0.90,H*0.60,0.95); const glow=ctx.createRadialGradient(W/2,H*0.16,20,W/2,H*0.16,W*0.20); glow.addColorStop(0,'rgba(255,223,120,.34)'); glow.addColorStop(1,'rgba(255,223,120,0)'); ctx.fillStyle=glow; ctx.fillRect(0,0,W,H*0.35); ctx.textAlign='center'; ctx.lineWidth=Math.max(4,W*0.006); ctx.strokeStyle='#5d2208'; ctx.fillStyle='#ffe06e'; ctx.font='bold '+Math.max(30,W*0.06)+'px Arial'; ctx.strokeText(TITLE,W/2,H*0.18); ctx.fillText(TITLE,W/2,H*0.18); }
+function drawMainCoverImage(){ const {W,H}=metrics(); if(coverImage.complete&&coverImage.naturalWidth>0){ ctx.drawImage(coverImage,0,0,W,H); ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(0,0,W,H); } else drawCoverBackground(); }
+function drawScene(now){ const {W,H}=metrics(); ctx.save(); const sx=(Math.random()-0.5)*shake, sy=(Math.random()-0.5)*shake; ctx.translate(sx,sy); if(state==='cover'){ drawMainCoverImage(); drawTitleOnCanvas(); } else if(state==='menu'||state==='scoreboard'||state==='result'){ drawCoverBackground(); } else { drawSky(); drawGround(); drawRunner(enemy); drawOfficer(); drawRunner(player); drawHud(now); } if(flash>0.01){ ctx.fillStyle='rgba(255,255,255,'+flash+')'; ctx.fillRect(0,0,W,H); } ctx.restore(); }
+function tryLockLandscape(){ try{ if(screen.orientation&&screen.orientation.lock&&isMobileLike()) screen.orientation.lock('landscape'); }catch(e){} }
+window.addEventListener('resize',()=>{ resizeCanvas(); updateRotateWarning(); });
+window.addEventListener('orientationchange',()=>{ resizeCanvas(); updateRotateWarning(); });
+window.addEventListener('load',()=>{ resizeCanvas(); updateRotateWarning(); tryLockLandscape(); });
+window.addEventListener('pointerdown', ensureAudio, {passive:true});
+window.addEventListener('touchstart', ensureAudio, {passive:true});
+window.addEventListener('keydown', ensureAudio, {passive:true});
+function loop(ts){ const now=ts||performance.now(), dt=Math.min(0.033,(now-lastTime)/1000||0.016); lastTime=now; updateRotateWarning(); if(shouldShowRotateWarning()){ ctx.clearRect(0,0,canvas.width,canvas.height); drawMainCoverImage(); requestAnimationFrame(loop); return; } if(state==='playing') updatePlaying(dt,now); else { shake*=Math.pow(0.18,dt||0.016); flash*=Math.pow(0.07,dt||0.016); blink+=dt||0.016; updateDust(player.dust,dt||0.016); updateDust(enemy.dust,dt||0.016); } drawScene(now); requestAnimationFrame(loop); }
+resizeCanvas(); updateRotateWarning(); showCover(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
